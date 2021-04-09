@@ -1,0 +1,135 @@
+---
+title: "Statistics and Data Analysis Assignment"
+author: "Domen Mohorčič, Larsen Cundrič"
+date: "09/04/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Roller Coaster Dataset Analysis
+
+State hypothesis here...
+
+
+## Basic analysis and plots
+
+```{r}
+roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
+```
+
+
+```{r}
+# GForce to many missing values..
+# 
+summary(roller_coasters_raw)
+```
+
+```{r}
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = Country, y = Speed))
+```
+```{r}
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = City, y = Speed))
+```
+
+
+
+```{r}
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = Park, y = Speed))
+```
+
+```{r}
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = Construction, y = Speed))
+```
+
+```{r}
+# Type is same as Construction?
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = Type, y = Speed))
+```
+
+
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
+    geom_point(aes(x = Height, y = Speed, color = Construction))
+```
+
+
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
+    geom_point(aes(x = Length, y = Speed, color = Construction))
+```
+
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
+    geom_boxplot(aes(x = as.factor(Numinversions), y = Speed, color = Construction))
+```
+
+```{r}
+# dost lame ... lahko spustimo
+roller_coasters_raw %>% 
+  filter(!is.na(GForce)) %>% 
+  ggplot() +
+    geom_point(aes(x = GForce, y = Speed))
+```
+
+## Inference?
+
+
+
+## Correlation Analysis
+
+```{r}
+# precej zanimivi so Height, Length, Numinversions
+(cor.test(roller_coasters_raw$Height, roller_coasters_raw$Speed))
+(cor.test(roller_coasters_raw$Length, roller_coasters_raw$Speed))
+(cor.test(roller_coasters_raw$Numinversions, roller_coasters_raw$Speed))
+(cor.test(roller_coasters_raw$Duration, roller_coasters_raw$Speed))
+(cor.test(roller_coasters_raw$GForce, roller_coasters_raw$Speed))
+(cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed)) # shit
+```
+
+## Regression
+
+```{r}
+roller_coasters <- roller_coasters_raw %>% 
+  select(Construction, Length, Height, Speed) %>% 
+  filter(!is.na(Speed) & !is.na(Height) & !is.na(Length)) %>% 
+  mutate("Steel" = as.numeric(Construction == 'Steel')) %>% 
+  select(-Construction)
+roller_coasters
+```
+
+```{r}
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(roller_coasters))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(roller_coasters)), size = smp_size)
+
+(train <- roller_coasters[train_ind, ])
+(test <- roller_coasters[-train_ind, ])
+```
+
+
+```{r}
+lin_model <- lm(Speed ~ ., data = train)
+(summary(lin_model))
+(coef(lin_model))
+```
+
+
+# Second Dataset Analysis --> TODO
+
+State hypothesis here...
