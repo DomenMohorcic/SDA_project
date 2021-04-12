@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(plyr)
 library(ggplot2)
+library(psych)
+library(lawstat)
 ```
 
 # Roller Coaster Dataset Analysis
@@ -19,7 +21,7 @@ State hypothesis here...
 
 ## Basic analysis and plots
 
-```{r}
+```{r, echo=FALSE}
 roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 ```
 
@@ -85,8 +87,110 @@ roller_coasters_raw %>%
     geom_point(aes(x = GForce, y = Speed))
 ```
 
-## Inference?
+## Inference and Hypothesis testing
 
+### Hypothesis Testing
+
+0) Check CLT conditions
+Central limit theorem:
+- Samples are independent,  
+- Sample size is bigger or equal to 30,
+- Population distribution is not strongly skewed.
+
+1) Set-up the hypothesis
+
+2) Assume threshold values 
+* $ \alpha - significance level$ - typically 0.05
+
+3) Calculate the Results:
+* point est.
+* number of cases
+* sd - standard deviation
+* se - standard error
+* df - degrees of freedom $ df = n-1 $
+* t-statistics
+* p-value
+
+4) Draw conclusions - Accept or reject hypothesis
+
+
+If we meet those criteria, we can infer about the population based on the analysis we do on the sample
+```{r}
+ggplot(roller_coasters_raw) +
+  geom_histogram(aes(x = Speed))
+```
+```{r}
+ggplot(roller_coasters_raw) +
+  geom_histogram(aes(x = Length))
+```
+```{r}
+ggplot(roller_coasters_raw) +
+  geom_histogram(aes(x = Height))
+```
+
+```{r}
+(symmetry.test(roller_coasters_raw$Speed))
+(shapiro.test(roller_coasters_raw$Speed))
+
+(symmetry.test(roller_coasters_raw$Height))
+(shapiro.test(roller_coasters_raw$Height))
+
+(symmetry.test(roller_coasters_raw$Length))
+(shapiro.test(roller_coasters_raw$Length))
+```
+
+We are allowed to infere on Speed, since only Speed meets the Limit Theorem requirements...
+```{r}
+roller_coasters_speeds <- roller_coasters_raw %>% 
+  select(Speed) %>% 
+  filter(!is.na(Speed)) 
+roller_coasters_speeds
+```
+
+$H_0:$ population mean speed is 70mph $\mu = 70$
+$H_A:$ population mean speed is not 70mph $\mu \neq 70$
+
+
+We want to infere on the Speed of roller coasters...
+```{r}
+(point_est_speed <- 70)
+(mean_speed <- mean(roller_coasters_speeds$Speed))
+(sd_speed <- sd(roller_coasters_speeds$Speed)) # standard deviation
+(sem_speed <- sd_speed / nrow(roller_coasters_speeds)) # standard error
+(df_speed <- nrow(roller_coasters_speeds) - 1)
+(t_speed <- (point_est_speed-mean_speed) / sem_speed)
+```
+p-value
+```{r}
+(p_val <- 2*(1- pt(t_speed, df = df_speed)))
+```
+
+95% confidence intervals
+```{r}
+#lower limit
+# mean_speed - 1.96 * sem_speed
+mean_speed + qt(0.025, df = df_speed) * sem_speed
+#upper limit
+# mean_speed + 1.96 * sem_speed
+mean_speed + qt(0.975, df = df_speed) * sem_speed
+```
+
+
+Let's plot our discovery...
+```{r}
+xframe <- seq(-7, 7, length = 100) 
+ggplot(data.frame(x = xframe), aes(x = x)) +
+  stat_function(fun = dt, args = list(df = df_speed)) +
+  geom_segment(aes(x = 0, y = 0, xend = 0, yend = dt(0, df = df_speed)),
+               color = 'blue',
+               linetype = 'dashed') + 
+  geom_segment(aes(x = t_speed, y = 0, xend = t_speed, yend = 0.4),
+               color = 'red')
+```
+
+
+We accept the null hypothesis in favor of the alternative.
+Mean roller coaster speed is not 70mph!
 
 
 ## Correlation Analysis
@@ -98,7 +202,7 @@ roller_coasters_raw %>%
 (cor.test(roller_coasters_raw$Numinversions, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$Duration, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$GForce, roller_coasters_raw$Speed))
-(cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed)) # shit
+(cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed)) # not good
 ```
 
 ## Regression
