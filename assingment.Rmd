@@ -8,6 +8,8 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(plyr)
+library(ggplot2)
 ```
 
 # Roller Coaster Dataset Analysis
@@ -130,6 +132,39 @@ lin_model <- lm(Speed ~ ., data = train)
 ```
 
 
-# Second Dataset Analysis --> TODO
+# Steam store games dataset analysis
 
-State hypothesis here...
+For our second dataset...
+
+```{r}
+steam <- read.csv("datasets/steam.csv")
+```
+
+```{r}
+steam_db <- steam %>% 
+  filter(grepl("Single-player", categories), grepl("Indie", genres)) %>% 
+  select(appid, name, release_date, positive_ratings, negative_ratings, average_playtime, median_playtime, owners, price)
+steam_db$owners_category <- as.numeric(mapvalues(steam_db$owners,
+                      from = c("0-20000","20000-50000","50000-100000","100000-200000","200000-500000","500000-1000000","1000000-2000000","2000000-5000000","5000000-10000000","10000000-20000000","20000000-50000000"),
+                      to = 1:length(unique(steam_db$owners))))
+steam_db <- steam_db %>% filter(owners_category >= 7)
+```
+
+## Description
+
+## Summary statistics
+
+Positive ratings
+```{r}
+(positive.sd = sd(steam_db$positive_ratings))
+(positive.mean = mean(steam_db$positive_ratings))
+(negative.sd = sd(steam_db$negative_ratings))
+(negative.mean = mean(steam_db$negative_ratings))
+
+steam_db %>% ggplot()+
+  geom_density(mapping = aes(x = positive_ratings), color = "blue")+
+  geom_density(aes(x = negative_ratings), color = "red")
+```
+
+
+## Inference
