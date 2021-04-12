@@ -95,17 +95,17 @@ Central limit theorem:
 
 1) Set-up the hypothesis
 
-2) Assume threshold values 
-* $ \alpha - significance level$ - typically 0.05
+2) Assume threshold values
+- $\alpha - significance level$ - typically 0.05
 
 3) Calculate the Results:
-* point est.
-* number of cases
-* sd - standard deviation
-* se - standard error
-* df - degrees of freedom $ df = n-1 $
-* t-statistics
-* p-value
+- point est.
+- number of cases
+- sd - standard deviation
+- se - standard error
+- df - degrees of freedom $df = n-1$
+- t-statistics
+- p-value
 
 4) Draw conclusions - Accept or reject hypothesis
 
@@ -200,7 +200,7 @@ Mean roller coaster speed is not 70mph!
 ```
 
 ```{r}
-pairs(roller_coasters, lower.panel = NULL)
+#pairs(roller_coasters, lower.panel = NULL)
 ```
 
 ## Regression
@@ -255,4 +255,106 @@ plot(rc_all)
 ```
 
 
-# Second dataset...
+# Red billed seagulls
+
+The dataset is available here: https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv
+
+```{r}
+seagulls <- read.csv("datasets/seagulls.csv")
+seagulls[seagulls$LOCATION == "MURWAI",]$LOCATION <- "MURIWAI"
+```
+
+```{r}
+seagulls %>% ggplot()+
+  geom_boxplot(aes(x = LOCATION, y = WEIGHT, fill = SEX))
+```
+
+```{r}
+seagulls %>% ggplot()+
+  geom_boxplot(aes(x = SEASON, y = WEIGHT, fill = SEX))
+```
+
+```{r}
+seagulls %>% ggplot()+
+  geom_density(aes(x = WEIGHT, fill = SEX), alpha = 0.3)
+```
+
+```{r}
+seagulls %>% ggplot()+
+  geom_density(aes(x = WEIGHT, fill = SEASON), alpha = 0.3)
+```
+
+```{r}
+seagulls %>% ggplot()+
+  geom_density(aes(x = WEIGHT, fill = COAST), alpha = 0.3)
+```
+
+```{r}
+seagulls %>% ggplot()+
+  geom_point(aes(x = LENGTH, y = WEIGHT, color = SEX))
+```
+
+## Inference
+
+Is weight of males different on east and west coast?
+```{r}
+sg_east <- seagulls %>% filter(COAST == "EAST", SEX == "MALE")
+sg_west <- seagulls %>% filter(COAST == "WEST", SEX == "MALE")
+```
+
+Check CLT conditions:
+1) Samples are made from independant observations ... OK
+2) Sample size is larger than 30 for both east and west males ... OK
+```{r}
+nrow(sg_east)
+nrow(sg_west)
+```
+3) Population is not strongly skewed ... OK
+```{r}
+seagulls %>% filter(SEX == "MALE") %>% ggplot()+
+  geom_density(aes(x = WEIGHT, fill = COAST), alpha = 0.3)
+```
+
+4) Groups are independant of each other ... OK
+5) Both groups are normally distributed ... OK
+
+```{r}
+east.mean <- mean(sg_east$WEIGHT)
+east.sd <- sd(sg_east$WEIGHT)
+sg_east %>% ggplot()+
+  geom_histogram(aes(x = WEIGHT, y = ..density..), fill = "green", color = "black")+
+  stat_function(fun = dnorm, args = list(mean = east.mean, sd = east.sd))
+```
+```{r}
+west.mean <- mean(sg_west$WEIGHT)
+west.sd <- sd(sg_west$WEIGHT)
+sg_west %>% ggplot()+
+  geom_histogram(aes(x = WEIGHT, y = ..density..), fill = "orange", color = "black")+
+  stat_function(fun = dnorm, args = list(mean = west.mean, sd = west.sd))
+```
+
+Setup hypothesis:
+
+$H_0:$ Mean weight is the same in east and west coast $mean_{east} - mean_{west} = 0$
+$H_A:$Mean weight is not the same in east and west coast $mean_{east} - mean_{west} \neq 0$
+
+```{r}
+(point_estimate <- east.mean - west.mean)
+(SE <- sqrt(east.sd ^ 2 / nrow(sg_east) + west.sd ^ 2 / nrow(sg_west)))
+(df <- min(nrow(sg_east) - 1, nrow(sg_west) - 1))
+(t_score <- point_estimate / SE)
+```
+
+```{r}
+ggplot(data.frame(x = seq(-6, 6, length = 200)), aes(x = x))+
+  stat_function(fun = dt, args = list(df = df))+
+  geom_segment(aes(x = t_score, y = 0, xend = t_score, yend = 0.4), color="red")
+```
+
+```{r}
+(p_value <- 2 * pt(t_score, df))
+```
+
+We reject $H_0$ in favor of $H_A$. Seagulls on east and west coast do not weight
+the same. Since our point estimate came out negative, we can say that seagulls
+on west coast weight more than seagulls on east coast.
