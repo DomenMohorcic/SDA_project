@@ -34,14 +34,12 @@ summary(roller_coasters_raw)
 
 ```{r}
 ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Country, y = Speed))
+  geom_boxplot(mapping = aes(x = Country, y = Speed, fill = Country))
 ```
 ```{r}
 ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = City, y = Speed))
 ```
-
-
 
 ```{r}
 ggplot(data = roller_coasters_raw) +
@@ -50,7 +48,7 @@ ggplot(data = roller_coasters_raw) +
 
 ```{r}
 ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Construction, y = Speed))
+  geom_boxplot(mapping = aes(x = Construction, y = Speed, fill = Construction))
 ```
 
 ```{r}
@@ -59,13 +57,11 @@ ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Type, y = Speed))
 ```
 
-
 ```{r}
 roller_coasters_raw %>% 
   ggplot() +
     geom_point(aes(x = Height, y = Speed, color = Construction))
 ```
-
 
 ```{r}
 roller_coasters_raw %>% 
@@ -178,7 +174,7 @@ mean_speed + qt(0.975, df = df_speed) * sem_speed
 
 Let's plot our discovery...
 ```{r}
-xframe <- seq(-7, 7, length = 100) 
+xframe <- seq(-7, 7, length = 100)
 ggplot(data.frame(x = xframe), aes(x = x)) +
   stat_function(fun = dt, args = list(df = df_speed)) +
   geom_segment(aes(x = 0, y = 0, xend = 0, yend = dt(0, df = df_speed)),
@@ -188,10 +184,8 @@ ggplot(data.frame(x = xframe), aes(x = x)) +
                color = 'red')
 ```
 
-
-We accept the null hypothesis in favor of the alternative.
+We reject the null hypothesis in favor of the alternative.
 Mean roller coaster speed is not 70mph!
-
 
 ## Correlation Analysis
 
@@ -203,6 +197,10 @@ Mean roller coaster speed is not 70mph!
 (cor.test(roller_coasters_raw$Duration, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$GForce, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed)) # not good
+```
+
+```{r}
+pairs(roller_coasters, lower.panel = NULL)
 ```
 
 ## Regression
@@ -235,40 +233,26 @@ lin_model <- lm(Speed ~ ., data = train)
 (coef(lin_model))
 ```
 
-
-# Steam store games dataset analysis
-
-For our second dataset...
-
 ```{r}
-steam <- read.csv("datasets/steam.csv")
+rc_all <- lm(Speed ~ ., data = roller_coasters)
+(summary(rc_all))
+plot(rc_all)
 ```
 
 ```{r}
-steam_db <- steam %>% 
-  filter(grepl("Single-player", categories), grepl("Indie", genres)) %>% 
-  select(appid, name, release_date, positive_ratings, negative_ratings, average_playtime, median_playtime, owners, price)
-steam_db$owners_category <- as.numeric(mapvalues(steam_db$owners,
-                      from = c("0-20000","20000-50000","50000-100000","100000-200000","200000-500000","500000-1000000","1000000-2000000","2000000-5000000","5000000-10000000","10000000-20000000","20000000-50000000"),
-                      to = 1:length(unique(steam_db$owners))))
-steam_db <- steam_db %>% filter(owners_category >= 7)
+roller_coasters %>% ggplot()+
+  geom_point(aes(x = Height, y = Speed))+
+  geom_smooth(aes(x = Height, y = Speed), method = lm)
 ```
 
-## Description
-
-## Summary statistics
-
-Positive ratings
 ```{r}
-(positive.sd = sd(steam_db$positive_ratings))
-(positive.mean = mean(steam_db$positive_ratings))
-(negative.sd = sd(steam_db$negative_ratings))
-(negative.mean = mean(steam_db$negative_ratings))
+roller_coasters$log_height <- log(roller_coasters$Height)
+roller_coasters$sq_height <- sqrt(roller_coasters$Height)
 
-steam_db %>% ggplot()+
-  geom_density(mapping = aes(x = positive_ratings), color = "blue")+
-  geom_density(aes(x = negative_ratings), color = "red")
+rc_all <- lm(Speed ~ sq_height, data = roller_coasters)
+(summary(rc_all))
+plot(rc_all)
 ```
 
 
-## Inference
+# Second dataset...
