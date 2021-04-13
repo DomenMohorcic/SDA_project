@@ -58,6 +58,11 @@ ggplot(data = roller_coasters_raw) +
 ```
 
 ```{r}
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = Inversions, y = Speed))
+```
+
+```{r}
 roller_coasters_raw %>% 
   ggplot() +
     geom_point(aes(x = Height, y = Speed, color = Construction))
@@ -143,6 +148,8 @@ roller_coasters_speeds <- roller_coasters_raw %>%
 roller_coasters_speeds
 ```
 
+### Hypothesis 1
+
 $H_0:$ population mean speed is 70mph $\mu = 70$
 $H_A:$ population mean speed is not 70mph $\mu \neq 70$
 
@@ -186,6 +193,62 @@ ggplot(data.frame(x = xframe), aes(x = x)) +
 
 We reject the null hypothesis in favor of the alternative.
 Mean roller coaster speed is not 70mph!
+
+
+### Difference of means t-test
+
+We want to check if the Wooden roller coasters are on average faster that the Steel ones.
+
+```{r}
+roller_coasters_steel <- roller_coasters_raw %>% 
+  filter(Construction == "Steel" & !is.na(Speed))
+
+roller_coasters_wood <- roller_coasters_raw %>% 
+  filter(Construction == "Wood" & !is.na(Speed))
+```
+
+Check number of instances
+```{r}
+nrow(roller_coasters_steel)
+nrow(roller_coasters_wood)
+```
+```{r}
+ggplot(roller_coasters_steel) +
+  geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
+  stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_steel$Speed), sd = sd(roller_coasters_steel$Speed)))
+```
+```{r}
+ggplot(roller_coasters_wood) +
+  geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
+  stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_wood$Speed), sd = sd(roller_coasters_wood$Speed)))
+```
+$$ H_O: mean_{Wood} - mean_{Steel}  = 0 $$
+$$ H_A: mean_{Wood} - mean_{Steel} \neq 0 $$
+
+$$ \alpha = 0.05 $$ 
+
+
+```{r}
+(point_est_const <- mean(roller_coasters_wood$Speed) - mean(roller_coasters_steel$Speed))
+# (sample_sd <- sd(kiwi_gs_m$height_cm))
+(SE <- sqrt((sd(roller_coasters_wood$Speed)^2/nrow(roller_coasters_wood)) + sd(roller_coasters_steel$Speed)^2/nrow(roller_coasters_steel)))
+(df <- nrow(roller_coasters_wood) - 1) # less
+(t_stat_const <- (point_est_const - 0) / SE) # t-score!
+```
+
+```{r}
+ggplot(data.frame(x = seq(-7, 7, length = 100)), aes(x = x)) + 
+  stat_function(fun = dt, args = list(df = df)) +
+  geom_segment(aes(x = t_stat_const, y = 0, xend = t_stat_const, yend = 0.4), color = 'red')
+```
+
+```{r}
+(p_val <- 2 * (1 - pt(t_stat_const, df)))
+```
+
+We reject the NULL hypothesis in favour of the alternative. The difference in means is significant
+and wooden roller coasters go faster on average.
+
 
 ## Correlation Analysis
 
