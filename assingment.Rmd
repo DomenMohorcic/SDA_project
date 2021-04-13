@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(plyr)
 library(ggplot2)
-library(psych)
 library(lawstat)
+library(e1071)
 ```
 
 # Roller Coaster Dataset Analysis
@@ -318,106 +318,197 @@ plot(rc_all)
 ```
 
 
-# Red billed seagulls
+# 2. Red Billed Seagulls
 
-The dataset is available here: https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv
+The dataset seagulls.csv represents the data collected about seagulls in Auckland,
+New Zeland. Dataset can be found [here](https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv).
 
-```{r}
+Data was collected on two seperate occasions (summer and winter) and on four
+different locations: Muriwai (a), Piha (b), Mareatai (c), and Waitawa (d).
+
+![Auckland region](seagulls.png)
+
+They collected seagull's weight, length, and sex, as well as its
+location and season. Authors of the dataset also point out that none of the
+locations is a major breeding site.
+
+We also cleaned dataset a bit. Some cases have misspelled "MURIWAI" as "MURWAI".
+Variables location, coast, season, and sex have been converted from strings to
+factors, and length was renamed to height, since that is more accurate varable
+description.
+```{r, warning=FALSE, error=FALSE}
 seagulls <- read.csv("datasets/seagulls.csv")
 seagulls[seagulls$LOCATION == "MURWAI",]$LOCATION <- "MURIWAI"
+colnames(seagulls)[2] <- "HEIGHT"
+seagulls$LOCATION <- as.factor(seagulls$LOCATION)
+seagulls$COAST <- as.factor(seagulls$COAST)
+seagulls$SEASON <- as.factor(seagulls$SEASON)
+seagulls$SEX <- as.factor(seagulls$SEX)
 ```
 
+## Summary statistics
+
+Seagulls dataset has `r nrow(seagulls)` cases and 6 variables: weight, height,
+location, coast, season, and sex. Weight and length are numerical, while location,
+coast, season, and sex are categorical.
+```{r summary_sg}
+summary(seagulls)
+```
+
+Weight of seagulls is in grams (g), and its distribution can be seen here:
+```{r sg_weightDistributionSex}
+seagulls %>% ggplot()+
+  geom_density(aes(x = WEIGHT, fill = SEX), alpha = 0.3)
+```
+Average weight of males is 278.73g with minimum of 235g and maximum of 320g.
+Average weight of females is 262.49g with minimum of 212g and maximum of 302g.
+We can see that weights of males are not normally distributed, while weights of
+females could be. We can check this with normality test:
+```{r sg_shapiroWeight}
+shapiro.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
+shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
+```
+We can see that weight is not normally distributed neither for males nor females,
+but latter are very close to passing the normallity test. We can also check if
+the distributions are at least symmetric:
+```{r sg_symmetryWeight}
+symmetry.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
+symmetry.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
+```
+Both pass symmetry test, meaning they are not strongly skewed and can be used
+later for inference.
+
+Height of seagulls is in centimeters (cm):
+```{r sg_heightDistributionSex}
+seagulls %>% ggplot()+
+  geom_density(aes(x = HEIGHT, fill = SEX), alpha = 0.3)
+```
+Average height of males is 37.74cm. Smallest male's height is 30cm, while largest
+is 44.8cm. Female's average height is 36.5cm with minimum of 28.5cm and maximum
+of 43.7cm.
+Seagulls height seems more normally distributed than weight, but we can check:
+```{r sg_shapiroHeight}
+shapiro.test(seagulls[seagulls$SEX == "MALE",]$HEIGHT)
+shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$HEIGHT)
+```
+We can see that height for both sexes passes as normally distributed.
+
+Location and coast are describing almost the same thing since coast is more broad
+description of location (Maraetai and Waitawa are under east coast and Muriwai and
+Piha are under west coast). Locations are almost equally represented in our dataset:
+```{r sg_location}
+summary(seagulls$LOCATION)
+```
+Coast variable is also equaly distributed:
+```{r sg_coast}
+summary(seagulls$COAST)
+```
+
+Season is either winter or summer. There are a little more entries for summer than
+for winter, but the difference is miniscule:
+```{r sg_season}
+summary(seagulls$SEASON)
+```
+
+There are more females presented in our dataset but the difference can be ignored:
+```{r sg_sex}
+summary(seagulls$SEX)
+```
+
+We also drew some other plots representing how different variables are connected:
 ```{r}
 seagulls %>% ggplot()+
   geom_boxplot(aes(x = LOCATION, y = WEIGHT, fill = SEX))
 ```
-
 ```{r}
 seagulls %>% ggplot()+
   geom_boxplot(aes(x = SEASON, y = WEIGHT, fill = SEX))
 ```
-
 ```{r}
 seagulls %>% ggplot()+
-  geom_density(aes(x = WEIGHT, fill = SEX), alpha = 0.3)
-```
-
-```{r}
-seagulls %>% ggplot()+
-  geom_density(aes(x = WEIGHT, fill = SEASON), alpha = 0.3)
-```
-
-```{r}
-seagulls %>% ggplot()+
-  geom_density(aes(x = WEIGHT, fill = COAST), alpha = 0.3)
-```
-
-```{r}
-seagulls %>% ggplot()+
-  geom_point(aes(x = LENGTH, y = WEIGHT, color = SEX))
+  geom_point(aes(x = HEIGHT, y = WEIGHT, color = SEX))
 ```
 
 ## Inference
 
-Is weight of males different on east and west coast?
-```{r}
+Since we can divide our datasets in many ways, we can also check many differnet
+hypothesis.
+
+### Is weight of males same on east and west coast?
+
+We first divide our dataset into two smaller ones, which represent males from
+different coasts.
+```{r sg_inferenceSplit}
 sg_east <- seagulls %>% filter(COAST == "EAST", SEX == "MALE")
 sg_west <- seagulls %>% filter(COAST == "WEST", SEX == "MALE")
 ```
 
-Check CLT conditions:
-1) Samples are made from independant observations ... OK
-2) Sample size is larger than 30 for both east and west males ... OK
-```{r}
-nrow(sg_east)
-nrow(sg_west)
-```
-3) Population is not strongly skewed ... OK
-```{r}
+Next we need to check CLT conditions. Since samples were collected independently
+from one another, first condition is true. Next we need to check if both samples
+have sufficient size. There are `r nrow(sg_east)` males from east and `r nrow(sg_west)`
+males from west. Both samples are larger than 30, so second condition is also true.
+Then we need to check if any of samples is skewed. We can draw their distributions
+and see that they both are somewhat symmetrical.
+```{r sg_inferencePlot}
 seagulls %>% filter(SEX == "MALE") %>% ggplot()+
   geom_density(aes(x = WEIGHT, fill = COAST), alpha = 0.3)
 ```
+We can also calculate skewness of both distributions. Weight of males from east
+coast have skewness of `r skewness(sg_east$WEIGHT)` and males from west have
+skewness of `r skewness(sg_west$WEIGHT)`. Both values are small, so we can safely
+say that neither distribution is strongly skewed.
 
-4) Groups are independant of each other ... OK
-5) Both groups are normally distributed ... OK
-
-```{r}
+We also need to check wether cases from groups are independant from each other.
+Since they were collected on different locations, they are independant.
+We can check if both groups are normally distributed. For that we can draw
+histogram of weights and overlay it with normal distribution with same average
+and standard deviation:
+```{r sg_inferenceEast, message=FALSE}
 east.mean <- mean(sg_east$WEIGHT)
 east.sd <- sd(sg_east$WEIGHT)
 sg_east %>% ggplot()+
   geom_histogram(aes(x = WEIGHT, y = ..density..), fill = "green", color = "black")+
   stat_function(fun = dnorm, args = list(mean = east.mean, sd = east.sd))
 ```
-```{r}
+```{r sg_inferenceWest, message=FALSE}
 west.mean <- mean(sg_west$WEIGHT)
 west.sd <- sd(sg_west$WEIGHT)
 sg_west %>% ggplot()+
   geom_histogram(aes(x = WEIGHT, y = ..density..), fill = "orange", color = "black")+
   stat_function(fun = dnorm, args = list(mean = west.mean, sd = west.sd))
 ```
-
-Setup hypothesis:
-
-$H_0:$ Mean weight is the same in east and west coast $mean_{east} - mean_{west} = 0$
-$H_A:$Mean weight is not the same in east and west coast $mean_{east} - mean_{west} \neq 0$
-
-```{r}
-(point_estimate <- east.mean - west.mean)
-(SE <- sqrt(east.sd ^ 2 / nrow(sg_east) + west.sd ^ 2 / nrow(sg_west)))
-(df <- min(nrow(sg_east) - 1, nrow(sg_west) - 1))
-(t_score <- point_estimate / SE)
+Neither distribution seem normally distributed. We can further test that hypothesis
+with normallity test:
+```{r sg_inferenceShapiro}
+shapiro.test(sg_east$WEIGHT)
+shapiro.test(sg_west$WEIGHT)
 ```
+Neither group has normal distribution, but they are symmetrical, so we will continue
+with our hypothesis testing.
 
-```{r}
+Then we set-up the hypothesis:
+$H_0:$ Mean weight is the same in east and west coast: $mean_{east} - mean_{west} = 0$
+$H_A:$ Mean weight is not the same in east and west coast: $mean_{east} - mean_{west} \neq 0$
+We set a threshold value $\alpha = 0.05$.
+
+We calculate our point estimate, standard error, and t-score and plot it:
+```{r sg_inferencePointEstimate}
+point_estimate <- east.mean - west.mean
+SE <- sqrt(east.sd ^ 2 / nrow(sg_east) + west.sd ^ 2 / nrow(sg_west))
+df <- min(nrow(sg_east) - 1, nrow(sg_west) - 1)
+t_score <- point_estimate / SE
+
 ggplot(data.frame(x = seq(-6, 6, length = 200)), aes(x = x))+
   stat_function(fun = dt, args = list(df = df))+
   geom_segment(aes(x = t_score, y = 0, xend = t_score, yend = 0.4), color="red")
 ```
-
-```{r}
-(p_value <- 2 * pt(t_score, df))
+We can see that our t-score (red line) falls to the left of student's t-distribution,
+so our null hypothesis is very likely false. We can further confirm that with our
+p-value calculation:
+```{r sg_inferencePValue}
+p_value <- 2 * pt(t_score, df)
 ```
-
-We reject $H_0$ in favor of $H_A$. Seagulls on east and west coast do not weight
-the same. Since our point estimate came out negative, we can say that seagulls
-on west coast weight more than seagulls on east coast.
+Since p-value is smaller than $\alpha$ (`r p_value` $< 0.05$), we reject $H_0$ in
+favor of $H_A$. Seagulls on east and west coast do not weight the same. Because our
+point estimate is negative, we can say that seagulls on west coast weight
+more than seagulls on east coast.
