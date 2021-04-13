@@ -14,12 +14,17 @@ library(psych)
 library(lawstat)
 ```
 
-# Roller Coaster Dataset Analysis
+# INTRODUCTION
 
-State hypothesis here...
+Our goal was to...
 
 
-## Basic analysis and plots
+# ROLLER COASTERS DATASET
+
+This dataset cointains...
+
+
+## Summary Statistics and plots
 
 ```{r, echo=FALSE}
 roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
@@ -62,35 +67,8 @@ ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Inversions, y = Speed))
 ```
 
-```{r}
-roller_coasters_raw %>% 
-  ggplot() +
-    geom_point(aes(x = Height, y = Speed, color = Construction))
-```
-
-```{r}
-roller_coasters_raw %>% 
-  ggplot() +
-    geom_point(aes(x = Length, y = Speed, color = Construction))
-```
-
-```{r}
-roller_coasters_raw %>% 
-  ggplot() +
-    geom_boxplot(aes(x = as.factor(Numinversions), y = Speed, color = Construction))
-```
-
-```{r}
-# dost lame ... lahko spustimo
-roller_coasters_raw %>% 
-  filter(!is.na(GForce)) %>% 
-  ggplot() +
-    geom_point(aes(x = GForce, y = Speed))
-```
 
 ## Inference and Hypothesis testing
-
-### Hypothesis Testing
 
 0) Check CLT conditions
 Central limit theorem:
@@ -148,11 +126,13 @@ roller_coasters_speeds <- roller_coasters_raw %>%
 roller_coasters_speeds
 ```
 
-### Hypothesis 1
+### Hypothesis 1 - One sample t-test
+
+
+Our hypothesis 1:
 
 $H_0:$ population mean speed is 70mph $\mu = 70$
 $H_A:$ population mean speed is not 70mph $\mu \neq 70$
-
 
 We want to infere on the Speed of roller coasters...
 ```{r}
@@ -195,7 +175,7 @@ We reject the null hypothesis in favor of the alternative.
 Mean roller coaster speed is not 70mph!
 
 
-### Difference of means t-test
+### Hypothesis 2 - Difference of two means t-test
 
 We want to check if the Wooden roller coasters are on average faster that the Steel ones.
 
@@ -222,6 +202,8 @@ ggplot(roller_coasters_wood) +
   geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
   stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_wood$Speed), sd = sd(roller_coasters_wood$Speed)))
 ```
+
+Our hypothesis 2:
 $$ H_O: mean_{Wood} - mean_{Steel}  = 0 $$
 $$ H_A: mean_{Wood} - mean_{Steel} \neq 0 $$
 
@@ -250,7 +232,9 @@ We reject the NULL hypothesis in favour of the alternative. The difference in me
 and wooden roller coasters go faster on average.
 
 
-## Correlation Analysis
+## Regression Analysis
+
+### Correlation Analysis
 
 ```{r}
 # precej zanimivi so Height, Length, Numinversions
@@ -265,8 +249,36 @@ and wooden roller coasters go faster on average.
 ```{r}
 #pairs(roller_coasters, lower.panel = NULL)
 ```
+### Regressoin Plots
 
-## Regression
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
+    geom_point(aes(x = Height, y = Speed, color = Construction))
+```
+
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
+    geom_point(aes(x = Length, y = Speed, color = Construction))
+```
+
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
+    geom_boxplot(aes(x = as.factor(Numinversions), y = Speed, color = Construction))
+```
+
+```{r}
+# dost lame ... lahko spustimo
+roller_coasters_raw %>% 
+  filter(!is.na(GForce)) %>% 
+  ggplot() +
+    geom_point(aes(x = GForce, y = Speed))
+```
+
+
+### Regression
 
 ```{r}
 roller_coasters <- roller_coasters_raw %>% 
@@ -316,6 +328,7 @@ rc_all <- lm(Speed ~ sq_height, data = roller_coasters)
 (summary(rc_all))
 plot(rc_all)
 ```
+
 
 
 # Red billed seagulls
