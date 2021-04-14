@@ -581,6 +581,9 @@ hypothesis.
 
 We want to know if there is a difference between males in east and west coast.
 
+$$H_0: mean_{east} - mean_{west} = 0$$
+$$H_A: mean_{east} - mean_{west} \neq 0$$
+
 We first divide our dataset into two smaller ones, which represent males from
 different coasts.
 ```{r sg_inferenceSplit}
@@ -631,11 +634,6 @@ shapiro.test(sg_west$WEIGHT)
 Neither group has normal distribution, but they are symmetrical, so we will continue
 with our hypothesis testing.
 
-Then we set-up the hypothesis:
-
-$H_0:$ Mean weight is the same in east and west coast: $mean_{east} - mean_{west} = 0$
-$H_A:$ Mean weight is not the same in east and west coast: $mean_{east} - mean_{west} \neq 0$
-
 We set a threshold value $\alpha = 0.05$.
 
 We calculate our point estimate, standard error, and t-score and plot it:
@@ -660,16 +658,49 @@ favor of $H_A$. Seagulls on east and west coast do not weight the same. Because 
 point estimate is negative, we can say that seagulls on west coast weight
 more than seagulls on east coast.
 
+### Are males and females equaly represented?
+
+We want to know if males and females are equaly represented, that is, if ratio of
+males to entire population is 50%.
+
+$$ H_0: p_{males} = 0.50 $$
+$$ H_A: p_{males} \neq 0.50 $$
+
+Since samples in our dataset are independant observations, first CLT condition is
+satisfied. We also have `r sum(seagulls$SEX == "MALE")` males and
+`r sum(seagulls$SEX == "FEMALE")` females. Both numbers are greater than 10, so we
+can proceed with categorical inference on proportion testing.
+
+```{r}
+ratio <- seagulls %>% filter(SEX == "MALE") %>% nrow() / nrow(seagulls)
+SE <- sqrt(ratio * (1 - ratio) / nrow(seagulls))
+
+ggplot(data.frame(x = seq(0.4, 0.6, length = 100)), aes(x = x))+
+  stat_function(fun = dnorm, args = list(mean = 0.5, sd = SE))+
+  geom_vline(xintercept = ratio, color = "red")
+```
+```{r}
+(p_value <- pnorm(ratio, mean = 0.5, sd = SE))
+```
+Since p_value of `r p_value` is greater than our threshold value of 0.05 we accept
+the null hypothesis. There is the same number of males and females in seagull
+population.
+
 ### Are the locations in our dataset representative?
 
 We are interested if the locations in our dataset are represented equally.
 
 $ H_0 $: Equal proportions of all locaitons
+
 $ H_A $: Unequal proportions of all locations
 
 We are goind to do a xhi-squared test for goodness of fit.
 
-TODO - check conditions
+Collected data about locations is independant. All 4 categories also have at least
+5 cases to them, so both chi-square test conditions are met.
+```{r}
+table(seagulls$LOCATION)
+```
 
 We need to calculate
 expected count for each category and for every category we calculate its Z score
@@ -682,8 +713,7 @@ z <- (table(seagulls$LOCATION) - expected_location) / sqrt(expected_location)
 chi <- sum(z ^ 2)
 
 df <- num_classes - 1
-```
-```{r}
+
 ggplot(data.frame(x = seq(0, 15, length = 100)), aes(x = x))+
   stat_function(fun = dchisq, args = list(df = df))+
   geom_vline(xintercept = chi, color = "red")
