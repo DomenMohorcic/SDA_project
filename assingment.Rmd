@@ -343,7 +343,7 @@ We see that all are suitable for predition only Opened is not...
 From the pairplot below, we can observe that there are some linear or non linear relationships between length, height and speed:
 
 ```{r}
-pairs(roller_coasters, lower.panel = NULL)
+# pairs(roller_coasters, lower.panel = NULL)
 ```
 
 ### Regressoin Plots
