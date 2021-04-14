@@ -535,26 +535,27 @@ shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$HEIGHT)
 ```
 We can see that height for both sexes passes as normally distributed.
 
-Location and coast are describing almost the same thing since coast is more broad
-description of location (Maraetai and Waitawa are under east coast and Muriwai and
-Piha are under west coast). Locations are almost equally represented in our dataset:
+We have four locations in our dataset: Maraetai, Waitawa, Muriwai, and Piha. Coast
+is either east or west and is a more broad description of location (Maraetai and
+Waitawa are under east coast and Muriwai and Piha are under west coast). Locations
+are almost equally represented in our dataset:
 ```{r sg_location}
-summary(seagulls$LOCATION)
+table(seagulls$LOCATION) / nrow(seagulls)
 ```
 Coast variable is also equaly distributed:
 ```{r sg_coast}
-summary(seagulls$COAST)
+table(seagulls$COAST) / nrow(seagulls)
 ```
 
 Season is either winter or summer. There are a little more entries for summer than
 for winter, but the difference is miniscule:
 ```{r sg_season}
-summary(seagulls$SEASON)
+table(seagulls$SEASON) / nrow(seagulls)
 ```
 
 There are more females presented in our dataset but the difference can be ignored:
 ```{r sg_sex}
-summary(seagulls$SEX)
+table(seagulls$SEX) / nrow(seagulls)
 ```
 
 We also drew some other plots representing how different variables are connected:
@@ -577,6 +578,8 @@ Since we can divide our datasets in many ways, we can also check many differnet
 hypothesis.
 
 ### Is weight of males same on east and west coast?
+
+We want to know if there is a difference between males in east and west coast.
 
 We first divide our dataset into two smaller ones, which represent males from
 different coasts.
@@ -629,8 +632,10 @@ Neither group has normal distribution, but they are symmetrical, so we will cont
 with our hypothesis testing.
 
 Then we set-up the hypothesis:
+
 $H_0:$ Mean weight is the same in east and west coast: $mean_{east} - mean_{west} = 0$
 $H_A:$ Mean weight is not the same in east and west coast: $mean_{east} - mean_{west} \neq 0$
+
 We set a threshold value $\alpha = 0.05$.
 
 We calculate our point estimate, standard error, and t-score and plot it:
@@ -642,15 +647,50 @@ t_score <- point_estimate / SE
 
 ggplot(data.frame(x = seq(-6, 6, length = 200)), aes(x = x))+
   stat_function(fun = dt, args = list(df = df))+
-  geom_segment(aes(x = t_score, y = 0, xend = t_score, yend = 0.4), color="red")
+  geom_vline(xintercept = t_score, color = "red")
 ```
 We can see that our t-score (red line) falls to the left of student's t-distribution,
 so our null hypothesis is very likely false. We can further confirm that with our
 p-value calculation:
 ```{r sg_inferencePValue}
-p_value <- 2 * pt(t_score, df)
+(p_value <- 2 * pt(t_score, df))
 ```
 Since p-value is smaller than $\alpha$ (`r p_value` $< 0.05$), we reject $H_0$ in
 favor of $H_A$. Seagulls on east and west coast do not weight the same. Because our
 point estimate is negative, we can say that seagulls on west coast weight
 more than seagulls on east coast.
+
+### Are the locations in our dataset representative?
+
+We are interested if the locations in our dataset are represented equally.
+
+$ H_0 $: Equal proportions of all locaitons
+$ H_A $: Unequal proportions of all locations
+
+We are goind to do a xhi-squared test for goodness of fit.
+
+TODO - check conditions
+
+We need to calculate
+expected count for each category and for every category we calculate its Z score
+and then sum squares of Z scores together. Finally we check where on this
+chi-squared distribution lies our score.
+```{r}
+num_classes <- length(unique(seagulls$LOCATION))
+expected_location <- nrow(seagulls) / num_classes
+z <- (table(seagulls$LOCATION) - expected_location) / sqrt(expected_location)
+chi <- sum(z ^ 2)
+
+df <- num_classes - 1
+```
+```{r}
+ggplot(data.frame(x = seq(0, 15, length = 100)), aes(x = x))+
+  stat_function(fun = dchisq, args = list(df = df))+
+  geom_vline(xintercept = chi, color = "red")
+```
+```{r}
+(p_value <- 1 - pchisq(chi, df))
+```
+Since our p_value is smaller then $\alpha$ (`r p_value` $< 0.05$), we can reject
+out null hypothesis in favor of alternative. Locations in our dataset are not
+equaly represented.
