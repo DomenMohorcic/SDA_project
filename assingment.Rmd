@@ -21,35 +21,45 @@ Our goal was to...
 
 # ROLLER COASTERS DATASET
 
-This dataset cointains...
+The dataset Coaster2015 presents data from various roller coasters across the globe. It has 16 attributes: name, park city, state, country, type, construction, height, speed, length, inversions, numinversions, duration, geforce, opened and region.
 
 
-## Summary Statistics and plots
+## Summary Statistics
 
 ```{r, echo=FALSE}
 roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 ```
 
+Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on...
 
 ```{r}
 # GForce to many missing values..
-# 
 summary(roller_coasters_raw)
 ```
+Lets have a look at the categorical variables first. We will skip the Name and Park since they have too many unique values:
 
 ```{r}
-ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Country, y = Speed, fill = Country))
+length(unique(roller_coasters_raw$Name))
+length(unique(roller_coasters_raw$Park))
+length(unique(roller_coasters_raw$City))
 ```
-```{r}
-ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = City, y = Speed))
-```
+As for the rest, look at the summary below:
 
 ```{r}
-ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Park, y = Speed))
+table(roller_coasters_raw$Country)
+table(roller_coasters_raw$State) 
+table(roller_coasters_raw$Type) # same as construction
+table(roller_coasters_raw$Construction)
 ```
+
+As for the numerical ones, we are generally most interested in speed. So we present most data relative to the speed of coasters. The speed is measured in milles per hour (mph), and its distribution relative to Construction can be seen here: 
+
+```{r}
+roller_coasters_raw %>% ggplot()+
+  geom_density(aes(x = Speed, fill = Construction), alpha = 0.3)
+```
+
+We present the same data on a boxplot:
 
 ```{r}
 ggplot(data = roller_coasters_raw) +
@@ -57,18 +67,48 @@ ggplot(data = roller_coasters_raw) +
 ```
 
 ```{r}
-# Type is same as Construction?
 ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Type, y = Speed))
+  geom_boxplot(mapping = aes(x = Type, y = Speed, fill = Type))
+```
+
+From the density plot and boxplot we can observe that wooden coaster are on average faster than the steel ones. This will also be one of the hypothesis tests later on to confirm our observations. Also note, that Type and Construction are the same attributes.
+
+Inversions also present some interesting data. When we have inversions we tend to have higher speeds as shown below on a density plot and box plot:
+
+```{r}
+roller_coasters_raw %>% ggplot()+
+  geom_density(aes(x = Speed, fill = Inversions), alpha = 0.3)
 ```
 
 ```{r}
 ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Inversions, y = Speed))
+  geom_boxplot(mapping = aes(x = Inversions, y = Speed, fill = Inversions))
 ```
 
 
+Last but not least, we compared the Countries and saw averages move from 50 to 75 mph, where US has the highest average:
+
+```{r}
+ggplot(data = roller_coasters_raw) +
+  geom_boxplot(mapping = aes(x = Country, y = Speed, fill = Country))
+```
+
+We also tested symmetry of Speed distributions for Steel and wood constructions:
+
+```{r}
+symmetry.test(roller_coasters_raw$Speed)
+symmetry.test(roller_coasters_raw[roller_coasters_raw$Construction == "Steel", ]$Speed)
+symmetry.test(roller_coasters_raw[roller_coasters_raw$Construction == "Wood", ]$Speed)
+```
+We see that Speed is a symmetric distribution and also both Steel and Wood have symmetric distributions which will help us later in the hypothesis testing.
+
+
+Other scatterplots are presented in the Regression section...
+
+
 ## Inference and Hypothesis testing
+
+The usual procedure for hypothesis testing is such:
 
 0) Check CLT conditions
 Central limit theorem:
@@ -92,8 +132,28 @@ Central limit theorem:
 
 4) Draw conclusions - Accept or reject hypothesis
 
+If we meet those criteria, we can infer about the population based on the analysis we do on the sample. We firstly assume that all the instances are independant. We can also see that there are more than enough instances:
 
-If we meet those criteria, we can infer about the population based on the analysis we do on the sample
+```{r}
+roller_coasters_raw %>% 
+  filter(!is.na(Speed)) %>% 
+  nrow()
+
+roller_coasters_raw %>% 
+  filter(!is.na(Height)) %>% 
+  nrow()
+
+roller_coasters_raw %>% 
+  filter(!is.na(Length)) %>% 
+  nrow()
+
+roller_coasters_raw %>% 
+  filter(!is.na(Numinversions)) %>% 
+  nrow()
+```
+
+Lastly, we want to see if the data is not heavily skewed:
+
 ```{r}
 ggplot(roller_coasters_raw) +
   geom_histogram(aes(x = Speed))
@@ -108,17 +168,27 @@ ggplot(roller_coasters_raw) +
 ```
 
 ```{r}
-(symmetry.test(roller_coasters_raw$Speed))
-(shapiro.test(roller_coasters_raw$Speed))
+ggplot(roller_coasters_raw) +
+  geom_histogram(aes(x = Numinversions))
+```
 
+From the above distributions we can observe that the most suitable distribution to make hypothesis testing on is Speed. And its symmetry is already proven in the summary statistics section...
+
+We can also prove that Height, Length and Numinversions are not normally distributed nor are they symmetric using the symmetry and shapiro test below:
+
+```{r}
 (symmetry.test(roller_coasters_raw$Height))
 (shapiro.test(roller_coasters_raw$Height))
 
 (symmetry.test(roller_coasters_raw$Length))
 (shapiro.test(roller_coasters_raw$Length))
+
+(symmetry.test(roller_coasters_raw$Numinversions))
+(shapiro.test(roller_coasters_raw$Numinversions))
 ```
 
-We are allowed to infere on Speed, since only Speed meets the Limit Theorem requirements...
+As such, we are allowed to infere and do hypothesis testing on Speed, since only Speed meets the Limit Theorem requirements...
+
 ```{r}
 roller_coasters_speeds <- roller_coasters_raw %>% 
   select(Speed) %>% 
@@ -128,13 +198,15 @@ roller_coasters_speeds
 
 ### Hypothesis 1 - One sample t-test
 
-
 Our hypothesis 1:
 
 $H_0:$ population mean speed is 70mph $\mu = 70$
 $H_A:$ population mean speed is not 70mph $\mu \neq 70$
 
-We want to infere on the Speed of roller coasters...
+$$ \alpha = 0.05 $$ 
+
+Calculate the necessary variables:
+
 ```{r}
 (point_est_speed <- 70)
 (mean_speed <- mean(roller_coasters_speeds$Speed))
@@ -143,12 +215,15 @@ We want to infere on the Speed of roller coasters...
 (df_speed <- nrow(roller_coasters_speeds) - 1)
 (t_speed <- (point_est_speed-mean_speed) / sem_speed)
 ```
+
 p-value
+
 ```{r}
 (p_val <- 2*(1- pt(t_speed, df = df_speed)))
 ```
 
 95% confidence intervals
+
 ```{r}
 #lower limit
 # mean_speed - 1.96 * sem_speed
@@ -157,7 +232,6 @@ mean_speed + qt(0.025, df = df_speed) * sem_speed
 # mean_speed + 1.96 * sem_speed
 mean_speed + qt(0.975, df = df_speed) * sem_speed
 ```
-
 
 Let's plot our discovery...
 ```{r}
@@ -187,28 +261,38 @@ roller_coasters_wood <- roller_coasters_raw %>%
   filter(Construction == "Wood" & !is.na(Speed))
 ```
 
-Check number of instances
+Check number of instances:
+
 ```{r}
 nrow(roller_coasters_steel)
 nrow(roller_coasters_wood)
 ```
+
+Although already proven with symmetry test in the summary statistics, let's have a look at our distribution plots and their skewness:
+
 ```{r}
 ggplot(roller_coasters_steel) +
   geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
   stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_steel$Speed), sd = sd(roller_coasters_steel$Speed)))
 ```
+
 ```{r}
 ggplot(roller_coasters_wood) +
   geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
   stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_wood$Speed), sd = sd(roller_coasters_wood$Speed)))
 ```
 
+This is enough to assume we can proceede with our hypothesis testing.
+
 Our hypothesis 2:
+
 $$ H_O: mean_{Wood} - mean_{Steel}  = 0 $$
 $$ H_A: mean_{Wood} - mean_{Steel} \neq 0 $$
 
 $$ \alpha = 0.05 $$ 
 
+
+Calculate necessary variables:
 
 ```{r}
 (point_est_const <- mean(roller_coasters_wood$Speed) - mean(roller_coasters_steel$Speed))
@@ -218,11 +302,15 @@ $$ \alpha = 0.05 $$
 (t_stat_const <- (point_est_const - 0) / SE) # t-score!
 ```
 
+Plot our finding:
+
 ```{r}
 ggplot(data.frame(x = seq(-7, 7, length = 100)), aes(x = x)) + 
   stat_function(fun = dt, args = list(df = df)) +
   geom_segment(aes(x = t_stat_const, y = 0, xend = t_stat_const, yend = 0.4), color = 'red')
 ```
+
+p-value:
 
 ```{r}
 (p_val <- 2 * (1 - pt(t_stat_const, df)))
@@ -234,7 +322,11 @@ and wooden roller coasters go faster on average.
 
 ## Regression Analysis
 
+Our goal is to make a linear regression model for prediction of a coasters Speed attribute.
+
 ### Correlation Analysis
+
+Let's have a look at the correlations (Pearson) and see which are the best candidates.
 
 ```{r}
 # precej zanimivi so Height, Length, Numinversions
@@ -246,10 +338,17 @@ and wooden roller coasters go faster on average.
 (cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed)) # not good
 ```
 
+We see that all are suitable for predition only Opened is not... 
+
+From the pairplot below, we can observe that there are some linear or non linear relationships between length, height and speed:
+
 ```{r}
-#pairs(roller_coasters, lower.panel = NULL)
+pairs(roller_coasters, lower.panel = NULL)
 ```
+
 ### Regressoin Plots
+
+To make sure we get the right attributes for our regression prediction of speed we wanted to take a look at the regression plots:
 
 ```{r}
 roller_coasters_raw %>% 
@@ -266,19 +365,32 @@ roller_coasters_raw %>%
 ```{r}
 roller_coasters_raw %>% 
   ggplot() +
+    geom_point(aes(x = Duration, y = Speed, color = Construction))
+```
+
+
+We treated Numinversions as a categorical variable since it has too few values to make a proper regression plot.
+
+```{r}
+roller_coasters_raw %>% 
+  ggplot() +
     geom_boxplot(aes(x = as.factor(Numinversions), y = Speed, color = Construction))
 ```
 
+With every plot above we can see some linearity going on. But the best are definitely height, length, and categorical variable Construction, since the boxplot and hypothesis test clearly showed there is a significan difference between the average speeds.
+
+We also wanted to show that GForce has to few values and not a good linear relationship, so that is why we won't include it into our prediction model:
+
 ```{r}
-# dost lame ... lahko spustimo
 roller_coasters_raw %>% 
   filter(!is.na(GForce)) %>% 
   ggplot() +
     geom_point(aes(x = GForce, y = Speed))
 ```
 
-
 ### Regression
+
+We prepared a cleaned dataset with only the variables that are going to predict speed.
 
 ```{r}
 roller_coasters <- roller_coasters_raw %>% 
@@ -300,6 +412,13 @@ train_ind <- sample(seq_len(nrow(roller_coasters)), size = smp_size)
 (train <- roller_coasters[train_ind, ])
 (test <- roller_coasters[-train_ind, ])
 ```
+
+For linear models we have to take care that the following hold:
+1) Linearity of the data
+2) Nearly normal residuals also check for outliers, mostly influencial outliers
+3) Constant variability
+4) Independent observations
+
 
 
 ```{r}
@@ -328,6 +447,17 @@ rc_all <- lm(Speed ~ sq_height, data = roller_coasters)
 (summary(rc_all))
 plot(rc_all)
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Red billed seagulls
