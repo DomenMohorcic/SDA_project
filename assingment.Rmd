@@ -423,7 +423,15 @@ par(mfrow=c(1,2))
 plot(lin_model, which = 1:2)
 ```
 
-From the above linear regression analysis and plot we are able to see that there is indeed a linearity (as p values show). But there are some influential outliers! Not to forget, the residuals also don't have a quite constant varibility. Although the model has a high R^2 we need to be careful when using this model since it does not completely meet the requirements of linear regression analysis.
+```{r}
+res_coasters <- residuals(lin_model) 
+roller_coasters %>% 
+  ggplot() +
+  geom_histogram(aes(x = res_coasters, y = ..density..), fill = "red", color = "black") +
+  stat_function(fun = dnorm, args = list(mean = mean(res_coasters), sd = sd(res_coasters)))
+```
+
+From the above linear regression analysis and plots we are able to see that there is indeed a linearity (as p values show). But there are some influential outliers! Not to forget, the residuals also don't have a quite constant varibility. Although the model has a high R^2 we need to be careful when using this model since it does not completely meet the requirements of linear regression analysis.
 
 We also made a multiple regression model using the most important features: height, steel and length.
 
@@ -434,9 +442,15 @@ rc_all <- lm(Speed ~ ., data = roller_coasters)
 par(mfrow=c(1,2))
 plot(rc_all, which = 1:2)
 ```
+```{r}
+res_coasters <- residuals(rc_all) 
+roller_coasters %>% 
+  ggplot() +
+  geom_histogram(aes(x = res_coasters, y = ..density..), fill = "red", color = "black") +
+  stat_function(fun = dnorm, args = list(mean = mean(res_coasters), sd = sd(res_coasters)))
+```
 
-Similarly as in the one regression analysis we assumed the data is independant. The R^2 is even higher with all significant attributes (as the p values show), so there is definitely a linearity. The problem again is that we have some influentail outliers and the variability is not constant! So again, as in the first regression we are allowed to use this but we need to be careful, as the model does not meet all the requirements for linear regression analysis.
-
+Similarly as in the one regression analysis we assumed the data is independent. The R^2 is even higher with all significant attributes (as the p values show), so there is definitely a linearity. The problem again is that we have some influential outliers and the variability is not constant! So again, as in the first regression we are allowed to use this but we need to be careful, as the model does not meet all the requirements for linear regression analysis.
 
 
 
