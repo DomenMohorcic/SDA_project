@@ -567,10 +567,6 @@ seagulls %>% ggplot()+
 seagulls %>% ggplot()+
   geom_boxplot(aes(x = SEASON, y = WEIGHT, fill = SEX))
 ```
-```{r}
-seagulls %>% ggplot()+
-  geom_point(aes(x = HEIGHT, y = WEIGHT, color = SEX))
-```
 
 ## Inference
 
@@ -724,3 +720,46 @@ ggplot(data.frame(x = seq(0, 15, length = 100)), aes(x = x))+
 Since our p_value is smaller then $\alpha$ (`r p_value` $< 0.05$), we can reject
 out null hypothesis in favor of alternative. Locations in our dataset are not
 equaly represented.
+
+## Linear regression
+
+There is one more thing we want to know about seagulls: is the weight of a seagull
+dependant of its height.
+
+First we can take a look at height-weight graph:
+```{r}
+seagulls %>% ggplot(aes(x = HEIGHT, y = WEIGHT, color = SEX))+
+  geom_point()+
+  geom_smooth(method = lm)
+```
+
+It seems like there is really no connection between height and weight. We further
+calculate its correlation coefficient:
+```{r}
+(c <- cor(seagulls$HEIGHT, seagulls$WEIGHT))
+```
+
+Correlation coefficient of `r c` hints that there is a weak correlation between
+height and weight of seagulls. But we can still try and create a linear model
+between those two variables:
+```{r}
+fit_wh <- lm(WEIGHT ~ HEIGHT, data = seagulls)
+summary(fit_wh)
+```
+```{r}
+par(mfrow=c(1,2))
+plot(fit_wh, which=1:2)
+```
+
+We can se that residuals have no visible pattern and on the q-q plot the residuals
+follow a nice line, so our model is valid. The most concerning thing is the R
+squared value, which is only `r summary(fit_wh)$r.squared`.
+
+We can also plot the density of residuals and see that they follow a normal
+distribution.
+```{r}
+res <- residuals(fit_wh)
+seagulls %>% ggplot()+
+  geom_histogram(aes(x = res, y = ..density..), fill = "cyan", color = "black")+
+  stat_function(fun = dnorm, args = list(mean = mean(res), sd = sd(res)))
+```
