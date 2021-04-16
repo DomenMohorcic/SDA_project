@@ -26,69 +26,57 @@ The dataset Coaster2015 presents data from various roller coasters across the gl
 
 ## Summary Statistics
 
-```{r, echo=FALSE}
+```{r, message=FALSE}
 roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 ```
 
 Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on...
 
 ```{r}
-# GForce to many missing values..
 summary(roller_coasters_raw)
 ```
-Lets have a look at the categorical variables first. We will skip the Name and Park since they have too many unique values:
-
-```{r}
-length(unique(roller_coasters_raw$Name))
-length(unique(roller_coasters_raw$Park))
-length(unique(roller_coasters_raw$City))
-```
-As for the rest, look at the summary below:
+Lets have a look at the categorical variables first. We will skip the Name, Park,
+and City since they have `r length(unique(roller_coasters_raw$Name))`, `r length(unique(roller_coasters_raw$Park))`,
+and `r length(unique(roller_coasters_raw$City))` unique values respectively. As
+for the rest, look at the summary below:
 
 ```{r}
 table(roller_coasters_raw$Country)
 table(roller_coasters_raw$State) 
-table(roller_coasters_raw$Type) # same as construction
-table(roller_coasters_raw$Construction)
+table(roller_coasters_raw$Construction) # Same as Type
 ```
 
 As for the numerical ones, we are generally most interested in speed. So we present most data relative to the speed of coasters. The speed is measured in milles per hour (mph), and its distribution relative to Construction can be seen here: 
 
-```{r}
+```{r, warning=FALSE}
 roller_coasters_raw %>% ggplot()+
   geom_density(aes(x = Speed, fill = Construction), alpha = 0.3)
 ```
 
 We present the same data on a boxplot:
 
-```{r}
+```{r, warning=FALSE}
 ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Construction, y = Speed, fill = Construction))
 ```
 
-```{r}
-ggplot(data = roller_coasters_raw) +
-  geom_boxplot(mapping = aes(x = Type, y = Speed, fill = Type))
-```
-
-From the density plot and boxplot we can observe that wooden coaster are on average faster than the steel ones. This will also be one of the hypothesis tests later on to confirm our observations. Also note, that Type and Construction are the same attributes.
+From the density plot and boxplot we can observe that wooden coaster are on average faster than the steel ones. This will also be one of the hypothesis tests later on to confirm our observations.
 
 Inversions also present some interesting data. When we have inversions we tend to have higher speeds as shown below on a density plot and box plot:
 
-```{r}
+```{r, warning=FALSE}
 roller_coasters_raw %>% ggplot()+
   geom_density(aes(x = Speed, fill = Inversions), alpha = 0.3)
 ```
 
-```{r}
+```{r, warning=FALSE}
 ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Inversions, y = Speed, fill = Inversions))
 ```
 
-
 Last but not least, we compared the Countries and saw averages move from 50 to 75 mph, where US has the highest average:
 
-```{r}
+```{r, warning=FALSE}
 ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Country, y = Speed, fill = Country))
 ```
@@ -97,29 +85,24 @@ We also tested symmetry of Speed distributions for Steel and wood constructions:
 
 ```{r}
 symmetry.test(roller_coasters_raw$Speed)
-symmetry.test(roller_coasters_raw[roller_coasters_raw$Construction == "Steel", ]$Speed)
-symmetry.test(roller_coasters_raw[roller_coasters_raw$Construction == "Wood", ]$Speed)
+symmetry.test(roller_coasters_raw[roller_coasters_raw$Construction == "Steel",]$Speed)
+symmetry.test(roller_coasters_raw[roller_coasters_raw$Construction == "Wood",]$Speed)
 ```
 We see that Speed is a symmetric distribution and also both Steel and Wood have symmetric distributions which will help us later in the hypothesis testing.
-
-
-Other scatterplots are presented in the Regression section...
-
 
 ## Inference and Hypothesis testing
 
 The usual procedure for hypothesis testing is such:
 
-0) Check CLT conditions
-Central limit theorem:
-- Samples are independent,  
+0) Check CLT conditions:
+- Samples are independent,
 - Sample size is bigger or equal to 30,
 - Population distribution is not strongly skewed.
 
 1) Set-up the hypothesis
 
 2) Assume threshold values
-- $\alpha - significance level$ - typically 0.05
+- $\alpha$ - typically 0.05
 
 3) Calculate the Results:
 - point est.
@@ -132,80 +115,61 @@ Central limit theorem:
 
 4) Draw conclusions - Accept or reject hypothesis
 
-If we meet those criteria, we can infer about the population based on the analysis we do on the sample. We firstly assume that all the instances are independant. We can also see that there are more than enough instances:
+If we meet those criteria, we can infer about the population based on the analysis we do on the sample. We firstly assume that all the instances are independent. We can also see that there are more than enough instances:
 
 ```{r}
-roller_coasters_raw %>% 
-  filter(!is.na(Speed)) %>% 
-  nrow()
-
-roller_coasters_raw %>% 
-  filter(!is.na(Height)) %>% 
-  nrow()
-
-roller_coasters_raw %>% 
-  filter(!is.na(Length)) %>% 
-  nrow()
-
-roller_coasters_raw %>% 
-  filter(!is.na(Numinversions)) %>% 
-  nrow()
+roller_coasters_raw %>% filter(!is.na(Speed)) %>% nrow()
+roller_coasters_raw %>% filter(!is.na(Height)) %>% nrow()
+roller_coasters_raw %>% filter(!is.na(Length)) %>% nrow()
+roller_coasters_raw %>% filter(!is.na(Numinversions)) %>% nrow()
 ```
 
 Lastly, we want to see if the data is not heavily skewed:
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ggplot(roller_coasters_raw) +
   geom_histogram(aes(x = Speed))
-```
-```{r}
+
 ggplot(roller_coasters_raw) +
   geom_histogram(aes(x = Length))
-```
-```{r}
+
 ggplot(roller_coasters_raw) +
   geom_histogram(aes(x = Height))
-```
 
-```{r}
 ggplot(roller_coasters_raw) +
   geom_histogram(aes(x = Numinversions))
 ```
 
-From the above distributions we can observe that the most suitable distribution to make hypothesis testing on is Speed. And its symmetry is already proven in the summary statistics section...
+From the above distributions we can observe that the most suitable distribution to make hypothesis testing on is Speed. And its symmetry is already proven in the summary statistics section.
 
 We can also prove that Height, Length and Numinversions are not normally distributed nor are they symmetric using the symmetry and shapiro test below:
 
 ```{r}
-(symmetry.test(roller_coasters_raw$Height))
-(shapiro.test(roller_coasters_raw$Height))
-
-(symmetry.test(roller_coasters_raw$Length))
-(shapiro.test(roller_coasters_raw$Length))
-
-(symmetry.test(roller_coasters_raw$Numinversions))
-(shapiro.test(roller_coasters_raw$Numinversions))
+symmetry.test(roller_coasters_raw$Height)
+shapiro.test(roller_coasters_raw$Height)
+symmetry.test(roller_coasters_raw$Length)
+shapiro.test(roller_coasters_raw$Length)
+symmetry.test(roller_coasters_raw$Numinversions)
+shapiro.test(roller_coasters_raw$Numinversions)
 ```
 
-As such, we are allowed to infere and do hypothesis testing on Speed, since only Speed meets the Limit Theorem requirements...
+As such, we are allowed to infere and do hypothesis testing on Speed, since only Speed meets the Limit Theorem requirements.
 
 ```{r}
 roller_coasters_speeds <- roller_coasters_raw %>% 
   select(Speed) %>% 
-  filter(!is.na(Speed)) 
-roller_coasters_speeds
+  filter(!is.na(Speed))
 ```
 
 ### Hypothesis 1 - One sample t-test
 
-Our hypothesis 1:
+Is the mean speed of roller coasters equal to 70mph?
 
 $$ H_0: \mu = 70 $$
 $$ H_A:\mu \neq 70 $$
+$$ \alpha = 0.05 $$
 
-$$ \alpha = 0.05 $$ 
-
-Calculate the necessary variables:
+We calculate the necessary variables:
 
 ```{r}
 (point_est_speed <- 70)
@@ -214,26 +178,22 @@ Calculate the necessary variables:
 (sem_speed <- sd_speed / nrow(roller_coasters_speeds)) # standard error
 (df_speed <- nrow(roller_coasters_speeds) - 1)
 (t_speed <- (point_est_speed-mean_speed) / sem_speed)
-```
-
-p-value
-
-```{r}
 (p_val <- 2*(1- pt(t_speed, df = df_speed)))
 ```
 
-95% confidence intervals
+We can alsocalculate 95% confidence intervals:
 
 ```{r}
 #lower limit
-# mean_speed - 1.96 * sem_speed
+# mean - 1.96 * SE
 mean_speed + qt(0.025, df = df_speed) * sem_speed
 #upper limit
-# mean_speed + 1.96 * sem_speed
+# mean + 1.96 * SE
 mean_speed + qt(0.975, df = df_speed) * sem_speed
 ```
 
-Let's plot our discovery...
+Finnaly we can plot our discovery:
+
 ```{r}
 xframe <- seq(-7, 7, length = 100)
 ggplot(data.frame(x = xframe), aes(x = x)) +
@@ -248,7 +208,6 @@ ggplot(data.frame(x = xframe), aes(x = x)) +
 We reject the null hypothesis in favor of the alternative.
 Mean roller coaster speed is not 70mph!
 
-
 ### Hypothesis 2 - Difference of two means t-test
 
 We want to check if the Wooden roller coasters are on average faster that the Steel ones.
@@ -256,7 +215,6 @@ We want to check if the Wooden roller coasters are on average faster that the St
 ```{r}
 roller_coasters_steel <- roller_coasters_raw %>% 
   filter(Construction == "Steel" & !is.na(Speed))
-
 roller_coasters_wood <- roller_coasters_raw %>% 
   filter(Construction == "Wood" & !is.na(Speed))
 ```
@@ -270,13 +228,13 @@ nrow(roller_coasters_wood)
 
 Although already proven with symmetry test in the summary statistics, let's have a look at our distribution plots and their skewness:
 
-```{r}
+```{r, message=FALSE}
 ggplot(roller_coasters_steel) +
   geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
   stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_steel$Speed), sd = sd(roller_coasters_steel$Speed)))
 ```
 
-```{r}
+```{r, message=FALSE}
 ggplot(roller_coasters_wood) +
   geom_histogram(aes(x = Speed, y = ..density..), fill ='red') +
   stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_wood$Speed), sd = sd(roller_coasters_wood$Speed)))
@@ -291,18 +249,17 @@ $$ H_A: mean_{Wood} - mean_{Steel} \neq 0 $$
 
 $$ \alpha = 0.05 $$ 
 
-
 Calculate necessary variables:
 
 ```{r}
 (point_est_const <- mean(roller_coasters_wood$Speed) - mean(roller_coasters_steel$Speed))
 # (sample_sd <- sd(kiwi_gs_m$height_cm))
 (SE <- sqrt((sd(roller_coasters_wood$Speed)^2/nrow(roller_coasters_wood)) + sd(roller_coasters_steel$Speed)^2/nrow(roller_coasters_steel)))
-(df <- nrow(roller_coasters_wood) - 1) # less
-(t_stat_const <- (point_est_const - 0) / SE) # t-score!
+(df <- nrow(roller_coasters_wood) - 1)
+(t_stat_const <- (point_est_const - 0) / SE)
 ```
 
-Plot our finding:
+Plot our findings:
 
 ```{r}
 ggplot(data.frame(x = seq(-7, 7, length = 100)), aes(x = x)) + 
@@ -319,55 +276,48 @@ p-value:
 We reject the NULL hypothesis in favour of the alternative. The difference in means is significant
 and wooden roller coasters go faster on average.
 
-
 ## Regression Analysis
 
-Our goal is to make a linear regression model for prediction of a coasters Speed attribute.
+Our goal is to make a linear regression model for prediction of coasters Speed attribute.
 
 ### Correlation Analysis
 
 Let's have a look at the correlations (Pearson) and see which are the best candidates.
 
 ```{r}
-# precej zanimivi so Height, Length, Numinversions
 (cor.test(roller_coasters_raw$Height, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$Length, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$Numinversions, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$Duration, roller_coasters_raw$Speed))
 (cor.test(roller_coasters_raw$GForce, roller_coasters_raw$Speed))
-(cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed)) # not good
+(cor.test(roller_coasters_raw$Opened, roller_coasters_raw$Speed))
 ```
 
-We see that all are suitable for predition only Opened is not... 
+We see that highest correlations to Speed have Height, Length, and Numinversions. We discard GForce because of many missing values.
 
-From the pairplot below, we can observe that there are some linear or non linear relationships between length, height and speed:
+From the pairplot below, we can observe that there are some linear or non linear relationships between length, height, speed, and numinversions:
 
 ```{r}
-# pairs(roller_coasters, lower.panel = NULL)
+pairs(select(roller_coasters_raw, 8:10, 12), lower.panel = NULL)
 ```
 
 ### Regressoin Plots
 
 To make sure we get the right attributes for our regression prediction of speed we wanted to take a look at the regression plots:
 
-```{r}
+```{r, warning=FALSE}
 roller_coasters_raw %>% 
   ggplot() +
     geom_point(aes(x = Height, y = Speed, color = Construction))
-```
 
-```{r}
 roller_coasters_raw %>% 
   ggplot() +
     geom_point(aes(x = Length, y = Speed, color = Construction))
-```
 
-```{r}
 roller_coasters_raw %>% 
   ggplot() +
     geom_point(aes(x = Duration, y = Speed, color = Construction))
 ```
-
 
 We treated Numinversions as a categorical variable since it has too few values to make a proper regression plot.
 
@@ -377,11 +327,11 @@ roller_coasters_raw %>%
     geom_boxplot(aes(x = as.factor(Numinversions), y = Speed, color = Construction))
 ```
 
-With every plot above we can see some linearity going on. But the best are definitely height, length, and categorical variable Construction, since the boxplot and hypothesis test clearly showed there is a significan difference between the average speeds.
+With every plot above we can see some linearity going on. But the best are definitely height, length, and categorical variable Construction, since the boxplot and hypothesis test clearly showed there is a significant difference between the average speeds.
 
 We also wanted to show that GForce has to few values and not a good linear relationship, so that is why we won't include it into our prediction model:
 
-```{r}
+```{r, warning=FALSE}
 roller_coasters_raw %>% 
   filter(!is.na(GForce)) %>% 
   ggplot() +
@@ -398,18 +348,18 @@ roller_coasters <- roller_coasters_raw %>%
   filter(!is.na(Speed) & !is.na(Height) & !is.na(Length)) %>% 
   mutate("Steel" = as.numeric(Construction == 'Steel')) %>% 
   select(-Construction)
-roller_coasters
+knitr::kable(head(roller_coasters))
 ```
 
 For linear models we have to take care that the following hold:
 1) Linearity of the data
-2) Nearly normal residuals also check for outliers, mostly influential outliers
-3) Constant variability
-4) Independent observations
+2) Nearly normal residuals (also check for outliers, mostly influential outliers)
+3) Constant variability and
+4) Independent observations.
 
-We will assume that all the observations are independent...
+We will assume that all the observations are independent.
 
-```{r}
+```{r, message=FALSE}
 roller_coasters %>% ggplot()+
   geom_point(aes(x = Height, y = Speed))+
   geom_smooth(aes(x = Height, y = Speed), method = lm)
@@ -417,13 +367,13 @@ roller_coasters %>% ggplot()+
 
 ```{r}
 lin_model <- lm(Speed ~ Height, data = roller_coasters)
-(summary(lin_model))
-(coef(lin_model))
+summary(lin_model)
+coef(lin_model)
 par(mfrow=c(1,2))
 plot(lin_model, which = 1:2)
 ```
 
-```{r}
+```{r, message=FALSE}
 res_coasters <- residuals(lin_model) 
 roller_coasters %>% 
   ggplot() +
@@ -437,12 +387,12 @@ We also made a multiple regression model using the most important features: heig
 
 ```{r}
 rc_all <- lm(Speed ~ ., data = roller_coasters)
-(summary(rc_all))
-(coef(rc_all))
+summary(rc_all)
+coef(rc_all)
 par(mfrow=c(1,2))
 plot(rc_all, which = 1:2)
 ```
-```{r}
+```{r, message=FALSE}
 res_coasters <- residuals(rc_all) 
 roller_coasters %>% 
   ggplot() +
@@ -464,7 +414,7 @@ Similarly as in the one regression analysis we assumed the data is independent. 
 # Red billed seagulls
 
 The dataset seagulls.csv represents the data collected about seagulls in Auckland,
-New Zeland. Dataset can be found [here](https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv).
+New Zeland. Dataset can be found \[[here]\](https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv).
 
 Data was collected on two seperate occasions (summer and winter) and on four
 different locations: Muriwai (a), Piha (b), Mareatai (c), and Waitawa (d).
@@ -488,101 +438,121 @@ seagulls$COAST <- as.factor(seagulls$COAST)
 seagulls$SEASON <- as.factor(seagulls$SEASON)
 seagulls$SEX <- as.factor(seagulls$SEX)
 ```
+```{r, echo=FALSE}
+knitr::kable(head(seagulls))
+```
 
 ## Summary statistics
 
 Seagulls dataset has `r nrow(seagulls)` cases and 6 variables: weight, height,
 location, coast, season, and sex. Weight and length are numerical, while location,
 coast, season, and sex are categorical.
+
 ```{r summary_sg}
-summary(seagulls)
+knitr::kable(summary(seagulls))
 ```
 
 Weight of seagulls is in grams (g), and its distribution can be seen here:
+
 ```{r sg_weightDistributionSex}
 seagulls %>% ggplot()+
   geom_density(aes(x = WEIGHT, fill = SEX), alpha = 0.3)
 ```
+
 Average weight of males is 278.73g with minimum of 235g and maximum of 320g.
 Average weight of females is 262.49g with minimum of 212g and maximum of 302g.
 We can see that weights of males are not normally distributed, while weights of
-females could be. We can check this with normality test:
+females could be. We can check this with Shapiro test:
+
 ```{r sg_shapiroWeight}
 shapiro.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
 shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
 ```
+
 We can see that weight is not normally distributed neither for males nor females,
-but latter are very close to passing the normallity test. We can also check if
+but latter are very close to passing the Shapiro test. We can also check if
 the distributions are at least symmetric:
+
 ```{r sg_symmetryWeight}
 symmetry.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
 symmetry.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
 ```
+
 Both pass symmetry test, meaning they are not strongly skewed and can be used
 later for inference.
 
 Height of seagulls is in centimeters (cm):
+
 ```{r sg_heightDistributionSex}
 seagulls %>% ggplot()+
   geom_density(aes(x = HEIGHT, fill = SEX), alpha = 0.3)
 ```
+
 Average height of males is 37.74cm. Smallest male's height is 30cm, while largest
 is 44.8cm. Female's average height is 36.5cm with minimum of 28.5cm and maximum
 of 43.7cm.
 Seagulls height seems more normally distributed than weight, but we can check:
+
 ```{r sg_shapiroHeight}
 shapiro.test(seagulls[seagulls$SEX == "MALE",]$HEIGHT)
 shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$HEIGHT)
 ```
+
 We can see that height for both sexes passes as normally distributed.
 
 We have four locations in our dataset: Maraetai, Waitawa, Muriwai, and Piha. Coast
 is either east or west and is a more broad description of location (Maraetai and
 Waitawa are under east coast and Muriwai and Piha are under west coast). Locations
 are almost equally represented in our dataset:
+
 ```{r sg_location}
 table(seagulls$LOCATION) / nrow(seagulls)
 ```
+
 Coast variable is also equaly distributed:
+
 ```{r sg_coast}
 table(seagulls$COAST) / nrow(seagulls)
 ```
 
 Season is either winter or summer. There are a little more entries for summer than
 for winter, but the difference is miniscule:
+
 ```{r sg_season}
 table(seagulls$SEASON) / nrow(seagulls)
 ```
 
 There are more females presented in our dataset but the difference can be ignored:
+
 ```{r sg_sex}
 table(seagulls$SEX) / nrow(seagulls)
 ```
 
 We also drew some other plots representing how different variables are connected:
+
 ```{r}
 seagulls %>% ggplot()+
   geom_boxplot(aes(x = LOCATION, y = WEIGHT, fill = SEX))
-```
-```{r}
+
 seagulls %>% ggplot()+
   geom_boxplot(aes(x = SEASON, y = WEIGHT, fill = SEX))
 ```
 
 ## Inference
 
-Since we can divide our datasets in many ways, we can also check many differnet
+Since we can divide our datasets in many ways, we can also check many different
 hypothesis.
 
 ### Is weight of males same on east and west coast?
 
-We want to know if there is a difference between males in east and west coast.
+We want to know if there is a difference between the males in east and west coast.
 
 $$H_0: mean_{east} - mean_{west} = 0$$
 $$H_A: mean_{east} - mean_{west} \neq 0$$
 
 We first divide our dataset into two smaller ones, which represent males from
 different coasts.
+
 ```{r sg_inferenceSplit}
 sg_east <- seagulls %>% filter(COAST == "EAST", SEX == "MALE")
 sg_west <- seagulls %>% filter(COAST == "WEST", SEX == "MALE")
@@ -594,10 +564,12 @@ have sufficient size. There are `r nrow(sg_east)` males from east and `r nrow(sg
 males from west. Both samples are larger than 30, so second condition is also true.
 Then we need to check if any of samples is skewed. We can draw their distributions
 and see that they both are somewhat symmetrical.
+
 ```{r sg_inferencePlot}
 seagulls %>% filter(SEX == "MALE") %>% ggplot()+
   geom_density(aes(x = WEIGHT, fill = COAST), alpha = 0.3)
 ```
+
 We can also calculate skewness of both distributions. Weight of males from east
 coast have skewness of `r skewness(sg_east$WEIGHT)` and males from west have
 skewness of `r skewness(sg_west$WEIGHT)`. Both values are small, so we can safely
@@ -608,48 +580,55 @@ Since they were collected on different locations, they are independant.
 We can check if both groups are normally distributed. For that we can draw
 histogram of weights and overlay it with normal distribution with same average
 and standard deviation:
+
 ```{r sg_inferenceEast, message=FALSE}
 east.mean <- mean(sg_east$WEIGHT)
 east.sd <- sd(sg_east$WEIGHT)
 sg_east %>% ggplot()+
   geom_histogram(aes(x = WEIGHT, y = ..density..), fill = "green", color = "black")+
   stat_function(fun = dnorm, args = list(mean = east.mean, sd = east.sd))
-```
-```{r sg_inferenceWest, message=FALSE}
+
 west.mean <- mean(sg_west$WEIGHT)
 west.sd <- sd(sg_west$WEIGHT)
 sg_west %>% ggplot()+
   geom_histogram(aes(x = WEIGHT, y = ..density..), fill = "orange", color = "black")+
   stat_function(fun = dnorm, args = list(mean = west.mean, sd = west.sd))
 ```
+
 Neither distribution seem normally distributed. We can further test that hypothesis
 with normallity test:
+
 ```{r sg_inferenceShapiro}
 shapiro.test(sg_east$WEIGHT)
 shapiro.test(sg_west$WEIGHT)
 ```
+
 Neither group has normal distribution, but they are symmetrical, so we will continue
 with our hypothesis testing.
 
 We set a threshold value $\alpha = 0.05$.
 
 We calculate our point estimate, standard error, and t-score and plot it:
+
 ```{r sg_inferencePointEstimate}
-point_estimate <- east.mean - west.mean
-SE <- sqrt(east.sd ^ 2 / nrow(sg_east) + west.sd ^ 2 / nrow(sg_west))
-df <- min(nrow(sg_east) - 1, nrow(sg_west) - 1)
-t_score <- point_estimate / SE
+(point_estimate <- east.mean - west.mean)
+(SE <- sqrt(east.sd ^ 2 / nrow(sg_east) + west.sd ^ 2 / nrow(sg_west)))
+(df <- min(nrow(sg_east) - 1, nrow(sg_west) - 1))
+(t_score <- point_estimate / SE)
 
 ggplot(data.frame(x = seq(-6, 6, length = 200)), aes(x = x))+
   stat_function(fun = dt, args = list(df = df))+
   geom_vline(xintercept = t_score, color = "red")
 ```
+
 We can see that our t-score (red line) falls to the left of student's t-distribution,
 so our null hypothesis is very likely false. We can further confirm that with our
 p-value calculation:
+
 ```{r sg_inferencePValue}
 (p_value <- 2 * pt(t_score, df))
 ```
+
 Since p-value is smaller than $\alpha$ (`r p_value` $< 0.05$), we reject $H_0$ in
 favor of $H_A$. Seagulls on east and west coast do not weight the same. Because our
 point estimate is negative, we can say that seagulls on west coast weight
@@ -669,14 +648,13 @@ satisfied. We also have `r sum(seagulls$SEX == "MALE")` males and
 can proceed with categorical inference on proportion testing.
 
 ```{r}
-ratio <- seagulls %>% filter(SEX == "MALE") %>% nrow() / nrow(seagulls)
-SE <- sqrt(ratio * (1 - ratio) / nrow(seagulls))
+(ratio <- seagulls %>% filter(SEX == "MALE") %>% nrow() / nrow(seagulls))
+(SE <- sqrt(ratio * (1 - ratio) / nrow(seagulls)))
 
 ggplot(data.frame(x = seq(0.4, 0.6, length = 100)), aes(x = x))+
   stat_function(fun = dnorm, args = list(mean = 0.5, sd = SE))+
   geom_vline(xintercept = ratio, color = "red")
-```
-```{r}
+
 (p_value <- pnorm(ratio, mean = 0.5, sd = SE))
 ```
 Since p_value of `r p_value` is greater than our threshold value of 0.05 we accept
@@ -687,14 +665,14 @@ population.
 
 We are interested if the locations in our dataset are represented equally.
 
-$ H_0 $: Equal proportions of all locaitons
-
-$ H_A $: Unequal proportions of all locations
+$$ H_0 $$: Equal proportions of all locaitons
+$$ H_A $$: Unequal proportions of all locations
 
 We are goind to do a xhi-squared test for goodness of fit.
 
 Collected data about locations is independant. All 4 categories also have at least
 5 cases to them, so both chi-square test conditions are met.
+
 ```{r}
 table(seagulls$LOCATION)
 ```
@@ -703,19 +681,18 @@ We need to calculate
 expected count for each category and for every category we calculate its Z score
 and then sum squares of Z scores together. Finally we check where on this
 chi-squared distribution lies our score.
-```{r}
-num_classes <- length(unique(seagulls$LOCATION))
-expected_location <- nrow(seagulls) / num_classes
-z <- (table(seagulls$LOCATION) - expected_location) / sqrt(expected_location)
-chi <- sum(z ^ 2)
 
-df <- num_classes - 1
+```{r}
+(num_classes <- length(unique(seagulls$LOCATION)))
+(expected_location <- nrow(seagulls) / num_classes)
+(z <- (table(seagulls$LOCATION) - expected_location) / sqrt(expected_location))
+(chi <- sum(z ^ 2))
+(df <- num_classes - 1)
 
 ggplot(data.frame(x = seq(0, 15, length = 100)), aes(x = x))+
   stat_function(fun = dchisq, args = list(df = df))+
   geom_vline(xintercept = chi, color = "red")
-```
-```{r}
+
 (p_value <- 1 - pchisq(chi, df))
 ```
 Since our p_value is smaller then $\alpha$ (`r p_value` $< 0.05$), we can reject
@@ -728,6 +705,7 @@ There is one more thing we want to know about seagulls: is the weight of a seagu
 dependant of its height.
 
 First we can take a look at height-weight graph:
+
 ```{r}
 seagulls %>% ggplot(aes(x = HEIGHT, y = WEIGHT, color = SEX))+
   geom_point()+
@@ -736,6 +714,7 @@ seagulls %>% ggplot(aes(x = HEIGHT, y = WEIGHT, color = SEX))+
 
 It seems like there is really no connection between height and weight. We further
 calculate its correlation coefficient:
+
 ```{r}
 (c <- cor(seagulls$HEIGHT, seagulls$WEIGHT))
 ```
@@ -743,21 +722,22 @@ calculate its correlation coefficient:
 Correlation coefficient of `r c` hints that there is a weak correlation between
 height and weight of seagulls. But we can still try and create a linear model
 between those two variables:
+
 ```{r}
 fit_wh <- lm(WEIGHT ~ HEIGHT, data = seagulls)
 summary(fit_wh)
-```
-```{r}
+
 par(mfrow=c(1,2))
 plot(fit_wh, which=1:2)
 ```
 
 We can se that residuals have no visible pattern and on the q-q plot the residuals
-follow a nice line, so our model is valid. The most concerning thing is the R
-squared value, which is only `r summary(fit_wh)$r.squared`.
+follow a nice line, so our model is valid. The most concerning thing is the R^2
+value, which is only `r summary(fit_wh)$r.squared`.
 
 We can also plot the density of residuals and see that they follow a normal
 distribution.
+
 ```{r}
 res <- residuals(fit_wh)
 seagulls %>% ggplot()+
