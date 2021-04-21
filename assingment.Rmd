@@ -19,7 +19,7 @@ library(e1071)
 Our goal was to...
 
 
-# ROLLER COASTERS DATASET
+# Roller Coasters Dataset
 
 The dataset Coaster2015 presents data from various roller coasters across the globe. It has 16 attributes: name, park city, state, country, type, construction, height, speed, length, inversions, numinversions, duration, geforce, opened and region.
 
@@ -448,6 +448,8 @@ Seagulls dataset has `r nrow(seagulls)` cases and 6 variables: weight, height,
 location, coast, season, and sex. Weight and length are numerical, while location,
 coast, season, and sex are categorical.
 
+\newpage
+
 ```{r summary_sg}
 knitr::kable(summary(seagulls))
 ```
@@ -469,17 +471,17 @@ shapiro.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
 shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
 ```
 
-We can see that weight is not normally distributed neither for males nor females,
-but latter are very close to passing the Shapiro test. We can also check if
-the distributions are at least symmetric:
+We can see from both p-values that weight is not normally distributed neither for
+males nor for females, but latter are very close to passing the Shapiro test. We
+can also check if the distributions are at least symmetric and not heavily skewed:
 
 ```{r sg_symmetryWeight}
 symmetry.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
 symmetry.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
 ```
 
-Both pass symmetry test, meaning they are not strongly skewed and can be used
-later for inference.
+Since both p-values are greater than 0.05, both pass symmetry test, meaning they
+are not strongly skewed and can be used later for inference testing.
 
 Height of seagulls is in centimeters (cm):
 
@@ -498,7 +500,8 @@ shapiro.test(seagulls[seagulls$SEX == "MALE",]$HEIGHT)
 shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$HEIGHT)
 ```
 
-We can see that height for both sexes passes as normally distributed.
+We can see that height for both sexes passes as normally distributed. We can also
+use height in hypothesis testing.
 
 We have four locations in our dataset: Maraetai, Waitawa, Muriwai, and Piha. Coast
 is either east or west and is a more broad description of location (Maraetai and
@@ -547,8 +550,8 @@ hypothesis.
 
 We want to know if there is a difference between the males in east and west coast.
 
-$$H_0: mean_{east} - mean_{west} = 0$$
-$$H_A: mean_{east} - mean_{west} \neq 0$$
+$$H_0\!: mean_{east} - mean_{west} = 0$$
+$$H_A\!: mean_{east} - mean_{west} \neq 0$$
 
 We first divide our dataset into two smaller ones, which represent males from
 different coasts.
@@ -639,8 +642,8 @@ more than seagulls on east coast.
 We want to know if males and females are equaly represented, that is, if ratio of
 males to entire population is 50%.
 
-$$ H_0: p_{males} = 0.50 $$
-$$ H_A: p_{males} \neq 0.50 $$
+$$H_0\!: p_{males} = 0.50$$
+$$H_A\!: p_{males} \neq 0.50$$
 
 Since samples in our dataset are independant observations, first CLT condition is
 satisfied. We also have `r sum(seagulls$SEX == "MALE")` males and
@@ -657,30 +660,31 @@ ggplot(data.frame(x = seq(0.4, 0.6, length = 100)), aes(x = x))+
 
 (p_value <- pnorm(ratio, mean = 0.5, sd = SE))
 ```
+
 Since p_value of `r p_value` is greater than our threshold value of 0.05 we accept
 the null hypothesis. There is the same number of males and females in seagull
 population.
 
-### Are the locations in our dataset representative?
+### Are the locations in our dataset equally represented?
 
-We are interested if the locations in our dataset are represented equally.
+We are interested if the locations in our dataset are represented equally, that
+means, if there is the same number of every location in our dataset.
 
-$$ H_0 $$: Equal proportions of all locaitons
-$$ H_A $$: Unequal proportions of all locations
+$$H_0\!:\;Equal\;proportions\;of\;all\;locaitons$$
+$$H_A\!:\;Unequal\;proportions\;of\;all\;locations$$
 
-We are goind to do a xhi-squared test for goodness of fit.
+We are going to do a chi-squared test for goodness of fit.
 
-Collected data about locations is independant. All 4 categories also have at least
+Collected data about locations is independent. All 4 categories also have at least
 5 cases to them, so both chi-square test conditions are met.
 
 ```{r}
 table(seagulls$LOCATION)
 ```
 
-We need to calculate
-expected count for each category and for every category we calculate its Z score
-and then sum squares of Z scores together. Finally we check where on this
-chi-squared distribution lies our score.
+We need to calculate expected count for each category and for every category we
+calculate its Z score and then sum squares of Z scores together. Finally we check
+where on chi-squared distribution lies our score.
 
 ```{r}
 (num_classes <- length(unique(seagulls$LOCATION)))
@@ -695,14 +699,15 @@ ggplot(data.frame(x = seq(0, 15, length = 100)), aes(x = x))+
 
 (p_value <- 1 - pchisq(chi, df))
 ```
+
 Since our p_value is smaller then $\alpha$ (`r p_value` $< 0.05$), we can reject
 out null hypothesis in favor of alternative. Locations in our dataset are not
-equaly represented.
+equally represented.
 
 ## Linear regression
 
-There is one more thing we want to know about seagulls: is the weight of a seagull
-dependant of its height.
+There is one more thing we want to know about seagulls: does the weight of a seagull
+depend on its height?
 
 First we can take a look at height-weight graph:
 
@@ -712,8 +717,8 @@ seagulls %>% ggplot(aes(x = HEIGHT, y = WEIGHT, color = SEX))+
   geom_smooth(method = lm)
 ```
 
-It seems like there is really no connection between height and weight. We further
-calculate its correlation coefficient:
+It seems like there is really no connection between height and weight. We can see
+that the points are scattered around. We further calculate its correlation coefficient:
 
 ```{r}
 (c <- cor(seagulls$HEIGHT, seagulls$WEIGHT))
@@ -732,15 +737,40 @@ plot(fit_wh, which=1:2)
 ```
 
 We can se that residuals have no visible pattern and on the q-q plot the residuals
-follow a nice line, so our model is valid. The most concerning thing is the R^2
-value, which is only `r summary(fit_wh)$r.squared`.
+follow a nice line, so our model is valid. The most concerning thing is the R-squared
+value, which is only `r summary(fit_wh)$r.squared`. That means that our model is
+not the best and there are some other things besides height that influence a weight
+of a seagull.
 
 We can also plot the density of residuals and see that they follow a normal
 distribution.
 
-```{r}
+```{r, message = FALSE}
 res <- residuals(fit_wh)
 seagulls %>% ggplot()+
   geom_histogram(aes(x = res, y = ..density..), fill = "cyan", color = "black")+
   stat_function(fun = dnorm, args = list(mean = mean(res), sd = sd(res)))
+```
+
+From previous graphs we can see that we can expand our model with sex of seagulls
+and a season. Both variables influence the weight of seagulls. We can try and build
+a model with those three variables: 
+
+```{r}
+fit_wh <- lm(WEIGHT ~ HEIGHT + SEASON + SEX, data = seagulls)
+summary(fit_wh)
+```
+
+We can see that our new model is much better with adjusted R-squared of `r summary(fit_wh)$adj.r.squared`.
+The formula for determining weight of a seagull is then
+$$WEIGHT = 200.07681 + 1.96847 * HEIGHT + -19.64618 * WINTER + 13.46615 * MALE$$
+where HEIGHT is in centimeters (cm), and WINTER and MALE are 0 or 1 depending on a season
+and a seagull. WEIGHT is in grams (g).
+
+If we wanted we could predict weight of any seagull if we knew its height, sex, and
+what season it is. A female seagull, 40cm tall and in the middle of summer thus
+weighs:
+
+```{r}
+200.07681 + 1.96847 * 40 + -19.64618 * 0 + 13.46615 * 0
 ```
