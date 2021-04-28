@@ -16,12 +16,12 @@ library(e1071)
 
 # INTRODUCTION
 
-Our goal was to...
+Our goal was to present our knowledge of statistics that we got from this course. We chose 2 different datasets and presented the data in various ways using summary statistics, plots, hypothesis testing and regression analysis. The two datasets are: 1) the Roller Coaster dataset and 2) the Seagaul dataset.
 
 
 # Roller Coasters Dataset
 
-The dataset Coaster2015 presents data from various roller coasters across the globe. It has 16 attributes: name, park city, state, country, type, construction, height, speed, length, inversions, numinversions, duration, geforce, opened and region.
+The dataset Coaster2015 presents data from various roller coasters across the globe. The dataset was retrieved from the Maastricht University (Course: BENC1006 Statistics, 1st year Business Engineering 2020/2021). It has 16 attributes: name, park city, state, country, type, construction, height, speed, length, inversions, numinversions, duration, geforce, opened and region.
 
 
 ## Summary Statistics
@@ -31,6 +31,11 @@ roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 ```
 
 Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on...
+
+```{r}
+knitr::kable(head(roller_coasters_raw))
+```
+
 
 ```{r}
 summary(roller_coasters_raw)
@@ -282,7 +287,7 @@ Our goal is to make a linear regression model for prediction of coasters Speed a
 
 ### Correlation Analysis
 
-Let's have a look at the correlations (Pearson) and see which are the best candidates.
+Let's have a look at the correlations (Pearson) and see which are the best candidates. This will help find significant high correlations.
 
 ```{r}
 (cor.test(roller_coasters_raw$Height, roller_coasters_raw$Speed))
@@ -403,6 +408,32 @@ roller_coasters %>%
 Similarly as in the one regression analysis we assumed the data is independent. The R^2 is even higher with all significant attributes (as the p values show), so there is definitely a linearity. The problem again is that we have some influential outliers and the variability is not constant! So again, as in the first regression we are allowed to use this but we need to be careful, as the model does not meet all the requirements for linear regression analysis.
 
 
+Just to demonstrate, we will make a prediction for a length of 1000, height of 125 and made of steel.
+```{r}
+calculateSpeed <- function(length, height, steel){
+  return(33.69989868 +  length*0.01403739 + height*1.22243835 - steel*5.99868362)
+}
+
+(calculateSpeed(1000, 125, 1))
+```
+
+The last thing we are interested in is the population coefficients of the linear regression. So, we will make confidence intervals to see, where our population coefficients really are.
+```{r}
+out <- summary(rc_all)
+sds <- out$coefficients[ , 2]
+coefs <- out$coefficients[ , 1]
+
+# LOWER LIMIT
+(coefs + qt(0.025, df = 248) * sds)
+# UPPER LIMIT
+(coefs + qt(0.975, df = 248) * sds)
+```
+
+Our confidence intervals are as followed:
+intercept ->  [28.90, 38,49]
+length ->     [0.010, 0.017]
+height ->     [1.144, 1.301]
+steel ->      [-10.0, -1.97]
 
 
 
