@@ -763,14 +763,20 @@ summary(fit_wh)
 
 We can see that our new model is much better with adjusted R-squared of `r summary(fit_wh)$adj.r.squared`.
 The formula for determining weight of a seagull is then
-$$WEIGHT = 200.07681 + 1.96847 * HEIGHT + -19.64618 * WINTER + 13.46615 * MALE$$
+$$WEIGHT = 200.07681 + 1.96847 * HEIGHT - 19.64618 * WINTER + 13.46615 * MALE$$
 where HEIGHT is in centimeters (cm), and WINTER and MALE are 0 or 1 depending on a season
 and a seagull. WEIGHT is in grams (g).
+
+We can also construct confidence intervals for every predictor variable. The confidence
+intervals are thus $`r summary(fit_wh)$coefficient[1,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[1,2]`$
+for Intercept, $`r summary(fit_wh)$coefficient[2,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[2,2]`$
+for height, $`r summary(fit_wh)$coefficient[3,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[3,2]`$
+for if season is winter, and $`r summary(fit_wh)$coefficient[4,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[4,2]`$ for if it is a male.
 
 If we wanted we could predict weight of any seagull if we knew its height, sex, and
 what season it is. A female seagull, 40cm tall and in the middle of summer thus
 weighs:
 
 ```{r}
-200.07681 + 1.96847 * 40 + -19.64618 * 0 + 13.46615 * 0
+200.07681 + 1.96847 * 40 - 19.64618 * 0 + 13.46615 * 0
 ```
