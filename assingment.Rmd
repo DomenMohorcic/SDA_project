@@ -33,7 +33,8 @@ roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on.
 
 ```{r}
-knitr::kable(head(roller_coasters_raw))
+(knitr::kable(head(roller_coasters_raw[,1:8])))
+(knitr::kable(head(roller_coasters_raw[,9:16])))
 ```
 
 
@@ -428,8 +429,7 @@ coefs <- out$coefficients[ , 1]
 (coefs + qt(0.975, df = 248) * sds)
 ```
 
-Our confidence intervals are as follows: intercept -> [28.90, 38.49], length -> 
-[0.010, 0.017], height -> [1.144, 1.301], and steel -> [-10.0, -1.97].
+Our confidence intervals are as follows: intercept -> [28.90, 38.49], length -> [0.010, 0.017], height -> [1.144, 1.301], and steel -> [-10.0, -1.97]. So, we can say with 95% confidence that the real population coefficients lie on the mentioned intervals.
 
 
 
