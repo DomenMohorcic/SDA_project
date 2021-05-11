@@ -30,7 +30,7 @@ The dataset Coaster2015 presents data from various roller coasters across the gl
 roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 ```
 
-Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on...
+Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on.
 
 ```{r}
 knitr::kable(head(roller_coasters_raw))
@@ -40,10 +40,10 @@ knitr::kable(head(roller_coasters_raw))
 ```{r}
 summary(roller_coasters_raw)
 ```
-Lets have a look at the categorical variables first. We will skip the Name, Park,
+Let's have a look at the categorical variables first. We will skip the Name, Park,
 and City since they have `r length(unique(roller_coasters_raw$Name))`, `r length(unique(roller_coasters_raw$Park))`,
 and `r length(unique(roller_coasters_raw$City))` unique values respectively. As
-for the rest, look at the summary below:
+for the rest, let's look at the summary below:
 
 ```{r}
 table(roller_coasters_raw$Country)
@@ -65,7 +65,7 @@ ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Construction, y = Speed, fill = Construction))
 ```
 
-From the density plot and boxplot we can observe that wooden coaster are on average faster than the steel ones. This will also be one of the hypothesis tests later on to confirm our observations.
+From the density plot and the boxplot we can observe that wooden coasters are on average faster than the steel ones. This will also be one of the hypothesis tests later on to confirm our observations.
 
 Inversions also present some interesting data. When we have inversions we tend to have higher speeds as shown below on a density plot and box plot:
 
@@ -86,7 +86,7 @@ ggplot(data = roller_coasters_raw) +
   geom_boxplot(mapping = aes(x = Country, y = Speed, fill = Country))
 ```
 
-We also tested symmetry of Speed distributions for Steel and wood constructions:
+We also tested symmetry of Speed distributions for Steel and Wood constructions:
 
 ```{r}
 symmetry.test(roller_coasters_raw$Speed)
@@ -120,7 +120,7 @@ The usual procedure for hypothesis testing is such:
 
 4) Draw conclusions - Accept or reject hypothesis
 
-If we meet those criteria, we can infer about the population based on the analysis we do on the sample. We firstly assume that all the instances are independent. We can also see that there are more than enough instances:
+If we meet the criteria, we can infer about the population based on the analysis we do on the sample. We firstly assume that all the instances are independent. We can also see that there are more than enough instances:
 
 ```{r}
 roller_coasters_raw %>% filter(!is.na(Speed)) %>% nrow()
@@ -147,7 +147,7 @@ ggplot(roller_coasters_raw) +
 
 From the above distributions we can observe that the most suitable distribution to make hypothesis testing on is Speed. And its symmetry is already proven in the summary statistics section.
 
-We can also prove that Height, Length and Numinversions are not normally distributed nor are they symmetric using the symmetry and shapiro test below:
+We can also prove that Height, Length and Numinversions are not normally distributed nor are they symmetric using the symmetry and Shapiro test below:
 
 ```{r}
 symmetry.test(roller_coasters_raw$Height)
@@ -158,7 +158,7 @@ symmetry.test(roller_coasters_raw$Numinversions)
 shapiro.test(roller_coasters_raw$Numinversions)
 ```
 
-As such, we are allowed to infere and do hypothesis testing on Speed, since only Speed meets the Limit Theorem requirements.
+As such, we are allowed to infer and do hypothesis testing on Speed, since only Speed meets the Limit Theorem requirements.
 
 ```{r}
 roller_coasters_speeds <- roller_coasters_raw %>% 
@@ -186,7 +186,7 @@ We calculate the necessary variables:
 (p_val <- 2*(1- pt(t_speed, df = df_speed)))
 ```
 
-We can alsocalculate 95% confidence intervals:
+We can also calculate 95% confidence intervals:
 
 ```{r}
 #lower limit
@@ -245,7 +245,7 @@ ggplot(roller_coasters_wood) +
   stat_function(fun = dnorm, args = list(mean = mean(roller_coasters_wood$Speed), sd = sd(roller_coasters_wood$Speed)))
 ```
 
-This is enough to assume we can proceede with our hypothesis testing.
+This is enough to assume we can proceed with our hypothesis testing.
 
 Our hypothesis 2:
 
@@ -278,12 +278,12 @@ p-value:
 (p_val <- 2 * (1 - pt(t_stat_const, df)))
 ```
 
-We reject the NULL hypothesis in favour of the alternative. The difference in means is significant
-and wooden roller coasters go faster on average.
+We reject the null hypothesis in favor of the alternative. The difference in means is significant
+and Wooden roller coasters go faster on average.
 
 ## Regression Analysis
 
-Our goal is to make a linear regression model for prediction of coasters Speed attribute.
+Our goal is to make a linear regression model for prediction of roller coasters Speed attribute.
 
 ### Correlation Analysis
 
@@ -300,7 +300,7 @@ Let's have a look at the correlations (Pearson) and see which are the best candi
 
 We see that highest correlations to Speed have Height, Length, and Numinversions. We discard GForce because of many missing values.
 
-From the pairplot below, we can observe that there are some linear or non linear relationships between length, height, speed, and numinversions:
+From the pair plot below, we can observe that there are some linear or non linear relationships between length, height, speed, and numinversions:
 
 ```{r}
 pairs(select(roller_coasters_raw, 8:10, 12), lower.panel = NULL)
@@ -332,9 +332,9 @@ roller_coasters_raw %>%
     geom_boxplot(aes(x = as.factor(Numinversions), y = Speed, color = Construction))
 ```
 
-With every plot above we can see some linearity going on. But the best are definitely height, length, and categorical variable Construction, since the boxplot and hypothesis test clearly showed there is a significant difference between the average speeds.
+With every plot above we can see some linearity going on. But the best are definitely height, length, and categorical variable Construction, since the boxplot and hypothesis test clearly show there are a significant differences between the average speeds.
 
-We also wanted to show that GForce has to few values and not a good linear relationship, so that is why we won't include it into our prediction model:
+We also noted that GForce has too few values and not a good linear relationship, so that is why we won't include it into our prediction model:
 
 ```{r, warning=FALSE}
 roller_coasters_raw %>% 
@@ -356,7 +356,7 @@ roller_coasters <- roller_coasters_raw %>%
 knitr::kable(head(roller_coasters))
 ```
 
-For linear models we have to take care that the following hold:
+For linear models we have to take care that the following holds:
 1) Linearity of the data
 2) Nearly normal residuals (also check for outliers, mostly influential outliers)
 3) Constant variability and
@@ -386,7 +386,7 @@ roller_coasters %>%
   stat_function(fun = dnorm, args = list(mean = mean(res_coasters), sd = sd(res_coasters)))
 ```
 
-From the above linear regression analysis and plots we are able to see that there is indeed a linearity (as p values show). But there are some influential outliers! Not to forget, the residuals also don't have a quite constant varibility. Although the model has a high R^2 we need to be careful when using this model since it does not completely meet the requirements of linear regression analysis.
+From the above linear regression analysis and plots we are able to see that there is indeed a linearity (as p values show). But there are some influential outliers! Not to forget, the residuals also do not have a quite constant varibility. Although the model has a high R^2 we need to be careful when using this model since it does not completely meet the requirements of linear regression analysis.
 
 We also made a multiple regression model using the most important features: height, steel and length.
 
@@ -405,10 +405,9 @@ roller_coasters %>%
   stat_function(fun = dnorm, args = list(mean = mean(res_coasters), sd = sd(res_coasters)))
 ```
 
-Similarly as in the one regression analysis we assumed the data is independent. The R^2 is even higher with all significant attributes (as the p values show), so there is definitely a linearity. The problem again is that we have some influential outliers and the variability is not constant! So again, as in the first regression we are allowed to use this but we need to be careful, as the model does not meet all the requirements for linear regression analysis.
+As before we assumed the data is independent. The R^2 is even higher with all significant attributes (as the p values show), so there is definitely a linearity. The problem again is that we have some influential outliers and the variability is not constant! So again, as in the first regression we are allowed to use this but we need to be careful, as the model does not meet all the requirements for linear regression analysis.
 
-
-Just to demonstrate, we will make a prediction for a length of 1000, height of 125 and made of steel.
+Just to demonstrate, we will make a prediction for speed of a roller coaster with a length of 1000 ft, height of 125 ft and made of Steel.
 ```{r}
 calculateSpeed <- function(length, height, steel){
   return(33.69989868 +  length*0.01403739 + height*1.22243835 - steel*5.99868362)
@@ -429,11 +428,9 @@ coefs <- out$coefficients[ , 1]
 (coefs + qt(0.975, df = 248) * sds)
 ```
 
-Our confidence intervals are as followed:
-intercept ->  [28.90, 38,49]
-length ->     [0.010, 0.017]
-height ->     [1.144, 1.301]
-steel ->      [-10.0, -1.97]
+Our confidence intervals are as follows: intercept -> [28.90, 38.49], length -> 
+[0.010, 0.017], height -> [1.144, 1.301], and steel -> [-10.0, -1.97].
+
 
 
 
@@ -445,20 +442,20 @@ steel ->      [-10.0, -1.97]
 # Red billed seagulls
 
 The dataset seagulls.csv represents the data collected about seagulls in Auckland,
-New Zeland. Dataset can be found \[[here]\](https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv).
+New Zeland. Dataset can be found [here](https://grapher.jake4maths.com/?folder=sneddon&dataset=GULLS.csv).
 
 Data was collected on two seperate occasions (summer and winter) and on four
 different locations: Muriwai (a), Piha (b), Mareatai (c), and Waitawa (d).
 
 ![Auckland region](seagulls.png)
 
-They collected seagull's weight, length, and sex, as well as its
+They collected seagulls' weight, length, and sex, as well as its
 location and season. Authors of the dataset also point out that none of the
 locations is a major breeding site.
 
-We also cleaned dataset a bit. Some cases have misspelled "MURIWAI" as "MURWAI".
+We also cleaned the dataset a bit. Some cases have misspelled "MURIWAI" as "MURWAI".
 Variables location, coast, season, and sex have been converted from strings to
-factors, and length was renamed to height, since that is more accurate varable
+factors, and length was renamed to height, since that is a more accurate variable
 description.
 ```{r, warning=FALSE, error=FALSE}
 seagulls <- read.csv("datasets/seagulls.csv")
@@ -502,7 +499,7 @@ shapiro.test(seagulls[seagulls$SEX == "MALE",]$WEIGHT)
 shapiro.test(seagulls[seagulls$SEX == "FEMALE",]$WEIGHT)
 ```
 
-We can see from both p-values that weight is not normally distributed neither for
+We can see from both p-values that the weight is not normally distributed neither for
 males nor for females, but latter are very close to passing the Shapiro test. We
 can also check if the distributions are at least symmetric and not heavily skewed:
 
@@ -562,7 +559,7 @@ There are more females presented in our dataset but the difference can be ignore
 table(seagulls$SEX) / nrow(seagulls)
 ```
 
-We also drew some other plots representing how different variables are connected:
+We also drew some other plots representing how different variables are distributed:
 
 ```{r}
 seagulls %>% ggplot()+
@@ -577,9 +574,9 @@ seagulls %>% ggplot()+
 Since we can divide our datasets in many ways, we can also check many different
 hypothesis.
 
-### Is weight of males same on east and west coast?
+### Is the weight of the males same on the east and west coast?
 
-We want to know if there is a difference between the males in east and west coast.
+We want to know if there is a difference between the males on the east and west coast.
 
 $$H_0\!: mean_{east} - mean_{west} = 0$$
 $$H_A\!: mean_{east} - mean_{west} \neq 0$$
@@ -596,7 +593,7 @@ Next we need to check CLT conditions. Since samples were collected independently
 from one another, first condition is true. Next we need to check if both samples
 have sufficient size. There are `r nrow(sg_east)` males from east and `r nrow(sg_west)`
 males from west. Both samples are larger than 30, so second condition is also true.
-Then we need to check if any of samples is skewed. We can draw their distributions
+Then we need to check if any of the samples is skewed. We can draw their distributions
 and see that they both are somewhat symmetrical.
 
 ```{r sg_inferencePlot}
@@ -604,14 +601,14 @@ seagulls %>% filter(SEX == "MALE") %>% ggplot()+
   geom_density(aes(x = WEIGHT, fill = COAST), alpha = 0.3)
 ```
 
-We can also calculate skewness of both distributions. Weight of males from east
-coast have skewness of `r skewness(sg_east$WEIGHT)` and males from west have
-skewness of `r skewness(sg_west$WEIGHT)`. Both values are small, so we can safely
+We can also calculate skewness of both distributions. Weight of males from the east
+coast have skewness of `r round(skewness(sg_east$WEIGHT), 3)` and males from the west have
+skewness of `r round(skewness(sg_west$WEIGHT), 3)`. Both values are small, so we can safely
 say that neither distribution is strongly skewed.
 
 We also need to check wether cases from groups are independant from each other.
 Since they were collected on different locations, they are independant.
-We can check if both groups are normally distributed. For that we can draw
+We can check if both groups are normally distributed. For that we can draw a
 histogram of weights and overlay it with normal distribution with same average
 and standard deviation:
 
@@ -629,8 +626,8 @@ sg_west %>% ggplot()+
   stat_function(fun = dnorm, args = list(mean = west.mean, sd = west.sd))
 ```
 
-Neither distribution seem normally distributed. We can further test that hypothesis
-with normallity test:
+Neither distribution seems normally distributed. We can further test that hypothesis
+with normality test:
 
 ```{r sg_inferenceShapiro}
 shapiro.test(sg_east$WEIGHT)
@@ -663,20 +660,20 @@ p-value calculation:
 (p_value <- 2 * pt(t_score, df))
 ```
 
-Since p-value is smaller than $\alpha$ (`r p_value` $< 0.05$), we reject $H_0$ in
-favor of $H_A$. Seagulls on east and west coast do not weight the same. Because our
+Since p-value is smaller than $\alpha$ (`r round(p_value, 3)` $< 0.05$), we reject $H_0$ in
+favor of $H_A$. Seagulls on the east and west coast do not weight the same. Because our
 point estimate is negative, we can say that seagulls on west coast weight
 more than seagulls on east coast.
 
 ### Are males and females equaly represented?
 
-We want to know if males and females are equaly represented, that is, if ratio of
+We want to know if males and females are equally represented, that is, if ratio of
 males to entire population is 50%.
 
 $$H_0\!: p_{males} = 0.50$$
 $$H_A\!: p_{males} \neq 0.50$$
 
-Since samples in our dataset are independant observations, first CLT condition is
+Since samples in our dataset are independent observations, first CLT condition is
 satisfied. We also have `r sum(seagulls$SEX == "MALE")` males and
 `r sum(seagulls$SEX == "FEMALE")` females. Both numbers are greater than 10, so we
 can proceed with categorical inference on proportion testing.
@@ -692,8 +689,8 @@ ggplot(data.frame(x = seq(0.4, 0.6, length = 100)), aes(x = x))+
 (p_value <- pnorm(ratio, mean = 0.5, sd = SE))
 ```
 
-Since p_value of `r p_value` is greater than our threshold value of 0.05 we accept
-the null hypothesis. There is the same number of males and females in seagull
+Since p-value of `r round(p_value, 3)` is greater than our threshold value of 0.05 we accept
+the null hypothesis. There is the same number of males and females in the seagull
 population.
 
 ### Are the locations in our dataset equally represented?
@@ -714,7 +711,7 @@ table(seagulls$LOCATION)
 ```
 
 We need to calculate expected count for each category and for every category we
-calculate its Z score and then sum squares of Z scores together. Finally we check
+calculate its Z score and then sum squares of Z scores together. Finally, we check
 where on chi-squared distribution lies our score.
 
 ```{r}
@@ -731,8 +728,8 @@ ggplot(data.frame(x = seq(0, 15, length = 100)), aes(x = x))+
 (p_value <- 1 - pchisq(chi, df))
 ```
 
-Since our p_value is smaller then $\alpha$ (`r p_value` $< 0.05$), we can reject
-out null hypothesis in favor of alternative. Locations in our dataset are not
+Since our p-value is smaller then $\alpha$ (`r round(p_value, 3)` $< 0.05$), we can reject
+out null hypothesis in favor of the alternative. Locations in our dataset are not
 equally represented.
 
 ## Linear regression
@@ -755,7 +752,7 @@ that the points are scattered around. We further calculate its correlation coeff
 (c <- cor(seagulls$HEIGHT, seagulls$WEIGHT))
 ```
 
-Correlation coefficient of `r c` hints that there is a weak correlation between
+Correlation coefficient of `r round(c, 3)` hints that there is a low correlation between
 height and weight of seagulls. But we can still try and create a linear model
 between those two variables:
 
@@ -769,7 +766,7 @@ plot(fit_wh, which=1:2)
 
 We can se that residuals have no visible pattern and on the q-q plot the residuals
 follow a nice line, so our model is valid. The most concerning thing is the R-squared
-value, which is only `r summary(fit_wh)$r.squared`. That means that our model is
+value, which is only `r round(summary(fit_wh)$r.squared, 3)`. That means that our model is
 not the best and there are some other things besides height that influence a weight
 of a seagull.
 
@@ -784,7 +781,7 @@ seagulls %>% ggplot()+
 ```
 
 From previous graphs we can see that we can expand our model with sex of seagulls
-and a season. Both variables influence the weight of seagulls. We can try and build
+and the season. Both variables influence the weight of seagulls. We can try and build
 a model with those three variables: 
 
 ```{r}
@@ -792,22 +789,20 @@ fit_wh <- lm(WEIGHT ~ HEIGHT + SEASON + SEX, data = seagulls)
 summary(fit_wh)
 ```
 
-We can see that our new model is much better with adjusted R-squared of `r summary(fit_wh)$adj.r.squared`.
+We can see that our new model is much better with adjusted R-squared of `r round(summary(fit_wh)$adj.r.squared, 3)`.
 The formula for determining weight of a seagull is then
-$$WEIGHT = 200.07681 + 1.96847 * HEIGHT - 19.64618 * WINTER + 13.46615 * MALE$$
+$$WEIGHT = 200.077 + 1.968 * HEIGHT - 19.646 * WINTER + 13.466 * MALE$$
 where HEIGHT is in centimeters (cm), and WINTER and MALE are 0 or 1 depending on a season
 and a seagull. WEIGHT is in grams (g).
 
 We can also construct confidence intervals for every predictor variable. The confidence
-intervals are thus $`r summary(fit_wh)$coefficient[1,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[1,2]`$
-for Intercept, $`r summary(fit_wh)$coefficient[2,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[2,2]`$
-for height, $`r summary(fit_wh)$coefficient[3,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[3,2]`$
-for if season is winter, and $`r summary(fit_wh)$coefficient[4,1]`\pm`r qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[4,2]`$ for if it is a male.
+intervals are thus $`r round(summary(fit_wh)$coefficient[1,1], 3)`\pm`r round(qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[1,2], 3)`$ for Intercept, $`r round(summary(fit_wh)$coefficient[2,1], 3)`\pm`r round(qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[2,2], 3)`$ for height, $`r round(summary(fit_wh)$coefficient[3,1], 3)`\pm`r round(qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[3,2], 3)`$
+for if season is winter, and $`r round(summary(fit_wh)$coefficient[4,1], 3)`\pm`r round(qt(0.975, summary(fit_wh)$df[2])*summary(fit_wh)$coefficient[4,2], 3)`$ for if it is a male.
 
 If we wanted we could predict weight of any seagull if we knew its height, sex, and
 what season it is. A female seagull, 40cm tall and in the middle of summer thus
 weighs:
 
 ```{r}
-200.07681 + 1.96847 * 40 - 19.64618 * 0 + 13.46615 * 0
+200.077 + 1.968 * 40 - 19.646 * 0 + 13.466 * 0
 ```
