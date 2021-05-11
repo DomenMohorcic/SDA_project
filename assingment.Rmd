@@ -33,8 +33,9 @@ roller_coasters_raw <- readr::read_csv('datasets/roller_coasters.csv')
 Coaster2015 dataset has 408 instances. As we can see, some values are missing. Attributes name, park city, state, country, type, construction and regian are categorical, while others are numerical. Where type and construction are basically the same attributes as seen later on.
 
 ```{r}
-(knitr::kable(head(roller_coasters_raw[,1:8])))
-(knitr::kable(head(roller_coasters_raw[,9:16])))
+(knitr::kable(head(roller_coasters_raw[,1:5])))
+(knitr::kable(head(roller_coasters_raw[,6:10])))
+(knitr::kable(head(roller_coasters_raw[,11:16])))
 ```
 
 
